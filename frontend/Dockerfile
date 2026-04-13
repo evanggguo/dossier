@@ -10,9 +10,12 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# 接收构建参数（API URL 在构建时写入）
-ARG NEXT_PUBLIC_API_URL=http://localhost:8080
+# 接收构建参数（NEXT_PUBLIC_* 在构建时内联到客户端代码）
+ARG NEXT_PUBLIC_API_URL=http://localhost:3000
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+# BACKEND_INTERNAL_URL 用于服务端 rewrites 代理（运行时读取即可）
+ARG BACKEND_INTERNAL_URL=http://backend:8080
+ENV BACKEND_INTERNAL_URL=$BACKEND_INTERNAL_URL
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .

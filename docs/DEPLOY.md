@@ -160,12 +160,15 @@ Ollama 默认监听 `http://localhost:11434`，Docker Compose 部署时后端通
 
 ### 4.4 切换为云端模型
 
-如需使用 Claude 或 OpenAI，修改 `.env` 中的 `AI_PROVIDER` 并提供对应 API Key（当前为 Mock 实现，填任意值即可触发模式切换）：
+如需使用 Claude，修改 `.env` 中的 `AI_PROVIDER` 并提供 API Key，同时关闭 mock 开关：
 
 ```dotenv
 AI_PROVIDER=claude
+AI_MOCK=false
 ANTHROPIC_API_KEY=sk-ant-xxxx
 ```
+
+> **注意**：`AI_MOCK` 仅对云端提供商（Claude）生效。使用本地 Ollama 时无需关心此配置，始终真实调用。
 
 ---
 
@@ -174,22 +177,22 @@ ANTHROPIC_API_KEY=sk-ant-xxxx
 在项目根目录创建 `.env` 文件（`.env` 已加入 `.gitignore`，不会提交到 Git）：
 
 ```dotenv
-# ── AI 提供商（必填）────────────────────────────────────────────────────
-# 可选: ollama（默认，本地模型）| claude | openai
+# ── AI 提供商────────────────────────────────────────────────────────────
+# AI_PROVIDER: 可选 ollama（默认，本地模型）| claude
 AI_PROVIDER=ollama
 
-# Ollama 服务地址（使用本地 Ollama 时配置）
+# Ollama 服务地址（AI_PROVIDER=ollama 时配置；本地模型始终真实调用，AI_MOCK 对其无效）
 # Docker Compose 内访问宿主机 Ollama：
 #   Mac/Windows: http://host.docker.internal:11434
 #   Linux:       http://172.17.0.1:11434（或宿主机实际 IP）
 AI_OLLAMA_BASE_URL=http://host.docker.internal:11434
 AI_OLLAMA_MODEL=qwen2.5:7b
 
-# Claude API Key（AI_PROVIDER=claude 时填写）
+# Claude 配置（AI_PROVIDER=claude 时填写）
+# AI_MOCK=true（默认）：不调用 Claude API，返回模拟数据
+# AI_MOCK=false：真实调用，需提供 ANTHROPIC_API_KEY
+AI_MOCK=true
 ANTHROPIC_API_KEY=
-
-# OpenAI API Key（AI_PROVIDER=openai 时填写）
-OPENAI_API_KEY=
 
 # ── 数据库（可选，有默认值）────────────────────────────────────────────
 DB_PASSWORD=postgres

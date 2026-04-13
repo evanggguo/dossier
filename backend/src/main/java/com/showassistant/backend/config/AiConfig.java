@@ -13,57 +13,59 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * TDD 4.5.4 — AI 提供商配置
- * 根据 application.yml 中的 ai.mock 和 ai.provider 条件，
+ * 根据 application.yml 中的 ai.provider 和 ai.mock 条件，
  * 注册唯一的 AiChatProvider Bean。
  *
  * 切换规则：
- *   ai.mock=true（默认）       → MockChatProvider（无需任何外部服务）
- *   ai.mock=false, ai.provider=ollama（默认） → OllamaChatProvider（本地 Ollama）
- *   ai.mock=false, ai.provider=claude          → ClaudeChatProvider（需要 ANTHROPIC_API_KEY）
+ *   ai.provider=ollama（默认）              → OllamaChatProvider（本地真实调用，忽略 ai.mock）
+ *   ai.provider=claude, ai.mock=false       → ClaudeChatProvider（需要 ANTHROPIC_API_KEY）
+ *   ai.provider=claude, ai.mock=true（默认）→ MockChatProvider（无需 API Key）
+ *
+ * 设计原则：本地物理模型（Ollama）始终真实调用，mock 开关仅对云端提供商生效。
  */
 @Slf4j
 @Configuration
 public class AiConfig {
 
     /**
-     * Mock 提供商（默认激活）
-     * ai.mock=true 时注册，无需 API Key 或 Ollama 服务。
+     * Ollama 本地模型提供商（默认激活）
+     * ai.provider=ollama 时注册，忽略 ai.mock——本地模型始终真实调用。
      */
     @Bean
-    @ConditionalOnProperty(name = "ai.mock", havingValue = "true", matchIfMissing = true)
-    public AiChatProvider mockAiChatProvider() {
-        log.info("AI provider: [mock] — using simulated responses");
-        return new MockChatProvider();
+    @ConditionalOnProperty(name = "ai.provider", havingValue = "ollama", matchIfMissing = true)
+    public AiChatProvider ollamaAiChatProvider(OllamaChatModel chatModel) {
+        log.info("AI provider: [ollama] — using local Ollama model (mock flag ignored)");
+        return new OllamaChatProvider(chatModel);
     }
 
     /**
-     * 真实提供商配置（ai.mock=false 时激活）
+     * Claude 云端模型提供商配置（ai.provider=claude 时激活）
      */
     @Configuration
-    @ConditionalOnProperty(name = "ai.mock", havingValue = "false")
-    static class RealProviderConfig {
+    @ConditionalOnProperty(name = "ai.provider", havingValue = "claude")
+    static class CloudProviderConfig {
 
         /**
-         * Ollama 本地模型提供商
-         * ai.mock=false, ai.provider=ollama（默认）时激活
-         */
-        @Bean
-        @ConditionalOnProperty(name = "ai.provider", havingValue = "ollama", matchIfMissing = true)
-        public AiChatProvider ollamaAiChatProvider(OllamaChatModel chatModel) {
-            log.info("AI provider: [ollama] — using local Ollama model");
-            return new OllamaChatProvider(chatModel);
-        }
-
-        /**
-         * Claude 云端模型提供商
-         * ai.mock=false, ai.provider=claude 时激活
+         * 真实 Claude 提供商
+         * ai.provider=claude, ai.mock=false 时激活
          * 需要环境变量 ANTHROPIC_API_KEY
          */
         @Bean
-        @ConditionalOnProperty(name = "ai.provider", havingValue = "claude")
+        @ConditionalOnProperty(name = "ai.mock", havingValue = "false")
         public AiChatProvider claudeAiChatProvider(AnthropicChatModel chatModel) {
             log.info("AI provider: [claude] — using Anthropic Claude API");
             return new ClaudeChatProvider(chatModel);
+        }
+
+        /**
+         * Mock 提供商（cloud fallback）
+         * ai.provider=claude, ai.mock=true（默认）时激活，无需 API Key。
+         */
+        @Bean
+        @ConditionalOnProperty(name = "ai.mock", havingValue = "true", matchIfMissing = true)
+        public AiChatProvider mockAiChatProvider() {
+            log.info("AI provider: [mock] — claude selected but ai.mock=true, using simulated responses");
+            return new MockChatProvider();
         }
     }
 }

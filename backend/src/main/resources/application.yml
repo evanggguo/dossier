@@ -34,9 +34,9 @@ spring:
           max-tokens: 2048
 
 # TDD 4.5.4 — AI 提供商切换配置
-# ai.mock=true（默认）：返回模拟数据，无需任何外部服务
-# ai.mock=false + ai.provider=ollama：调用本地 Ollama（需启动 Ollama 并拉取模型）
-# ai.mock=false + ai.provider=claude：调用 Claude API（需设置 ANTHROPIC_API_KEY）
+# ai.provider=ollama（默认）：始终调用本地 Ollama，ai.mock 对此无效
+# ai.provider=claude + ai.mock=false：调用 Claude API（需设置 ANTHROPIC_API_KEY）
+# ai.provider=claude + ai.mock=true（默认）：返回模拟数据，无需 API Key
 ai:
   mock: ${AI_MOCK:true}
   provider: ${AI_PROVIDER:ollama}

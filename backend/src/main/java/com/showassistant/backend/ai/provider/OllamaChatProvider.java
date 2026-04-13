@@ -12,7 +12,7 @@ import java.util.List;
  * TDD 4.5.3 — Ollama 本地模型提供商（真实实现）
  * 通过 Spring AI OllamaChatModel 调用本地 Ollama 服务进行流式对话。
  *
- * 通过 application.yml 中 ai.mock=false，ai.provider=ollama 激活。
+ * 通过 application.yml 中 ai.provider=ollama（默认）激活，ai.mock 对本地模型无效。
  * Ollama 服务地址由 spring.ai.ollama.base-url 配置（默认 http://localhost:11434）。
  */
 @Slf4j

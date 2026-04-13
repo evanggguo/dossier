@@ -10,9 +10,7 @@ import java.util.List;
 /**
  * TDD 4.5.3 — Mock AI 提供商
  * 返回固定的模拟 token 流，不调用任何真实 AI API。
- * 适用于本地开发、CI 测试等无模型环境。
- *
- * 通过 application.yml 中 ai.mock=true（默认）激活。
+ * 仅在云端提供商（如 Claude）且 ai.mock=true 时激活，本地 Ollama 不受此影响。
  *
  * 模拟 Tool Use 行为：在返回 token 流之前，
  * 直接调用 SuggestFollowupsTool.suggestFollowups() 以触发 suggestions 捕获，
@@ -24,8 +22,8 @@ public class MockChatProvider implements AiChatProvider {
     private static final List<String> MOCK_TOKENS = List.of(
         "您好！", "我是展示助理，", "当前运行在 **Mock 模式**。\n\n",
         "如需接入真实模型，请在配置中设置：\n",
-        "- 本地模型：`AI_MOCK=false`，`AI_PROVIDER=ollama`\n",
-        "- Claude：`AI_MOCK=false`，`AI_PROVIDER=claude`，`ANTHROPIC_API_KEY=<key>`"
+        "- 本地模型（推荐）：`AI_PROVIDER=ollama`（无需其他配置，mock 开关对本地模型无效）\n",
+        "- Claude：`AI_PROVIDER=claude`，`AI_MOCK=false`，`ANTHROPIC_API_KEY=<key>`"
     );
 
     private static final List<String> MOCK_SUGGESTIONS = List.of(

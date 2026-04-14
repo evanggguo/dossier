@@ -32,14 +32,28 @@ spring:
         options:
           model: claude-sonnet-4-6
           max-tokens: 2048
+    # Google Vertex AI Gemini 云端模型配置（ai.provider=google 时使用）
+    # 需要 GCP 项目 ID、区域，以及 Google Application Default Credentials
+    # 本地开发：gcloud auth application-default login
+    # 生产环境：设置 GOOGLE_APPLICATION_CREDENTIALS 指向服务账号密钥文件
+    vertex:
+      ai:
+        gemini:
+          project-id: ${GOOGLE_CLOUD_PROJECT:placeholder}
+          location: ${GOOGLE_CLOUD_LOCATION:us-central1}
+          chat:
+            options:
+              model: ${GOOGLE_AI_MODEL:gemini-2.5-flash-lite-001}
 
 # TDD 4.5.4 — AI 提供商切换配置
 # ai.provider=ollama（默认）：始终调用本地 Ollama，ai.mock 对此无效
 # ai.provider=claude + ai.mock=false：调用 Claude API（需设置 ANTHROPIC_API_KEY）
 # ai.provider=claude + ai.mock=true（默认）：返回模拟数据，无需 API Key
+# ai.provider=google + ai.mock=false：调用 Google Vertex AI Gemini（需设置 GOOGLE_CLOUD_PROJECT 和 GCP 凭证）
+# ai.provider=google + ai.mock=true（默认）：返回模拟数据，无需 GCP 凭证
 ai:
-  mock: ${AI_MOCK:true}
-  provider: ${AI_PROVIDER:ollama}
+  mock: ${AI_MOCK:false}
+  provider: ${AI_PROVIDER:google}
 
 app:
   sse:

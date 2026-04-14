@@ -2,10 +2,12 @@ package com.showassistant.backend.config;
 
 import com.showassistant.backend.ai.provider.AiChatProvider;
 import com.showassistant.backend.ai.provider.ClaudeChatProvider;
+import com.showassistant.backend.ai.provider.GoogleChatProvider;
 import com.showassistant.backend.ai.provider.MockChatProvider;
 import com.showassistant.backend.ai.provider.OllamaChatProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.anthropic.AnthropicChatModel;
+import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatModel;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +22,8 @@ import org.springframework.context.annotation.Configuration;
  *   ai.provider=ollama（默认）              → OllamaChatProvider（本地真实调用，忽略 ai.mock）
  *   ai.provider=claude, ai.mock=false       → ClaudeChatProvider（需要 ANTHROPIC_API_KEY）
  *   ai.provider=claude, ai.mock=true（默认）→ MockChatProvider（无需 API Key）
+ *   ai.provider=google, ai.mock=false       → GoogleChatProvider（需要 GCP 项目 ID + Application Default Credentials）
+ *   ai.provider=google, ai.mock=true（默认）→ MockChatProvider（无需 GCP 凭证）
  *
  * 设计原则：本地物理模型（Ollama）始终真实调用，mock 开关仅对云端提供商生效。
  */
@@ -43,7 +47,7 @@ public class AiConfig {
      */
     @Configuration
     @ConditionalOnProperty(name = "ai.provider", havingValue = "claude")
-    static class CloudProviderConfig {
+    static class ClaudeProviderConfig {
 
         /**
          * 真实 Claude 提供商
@@ -65,6 +69,37 @@ public class AiConfig {
         @ConditionalOnProperty(name = "ai.mock", havingValue = "true", matchIfMissing = true)
         public AiChatProvider mockAiChatProvider() {
             log.info("AI provider: [mock] — claude selected but ai.mock=true, using simulated responses");
+            return new MockChatProvider();
+        }
+    }
+
+    /**
+     * Google Generative AI（Gemini）云端模型提供商配置（ai.provider=google 时激活）
+     */
+    @Configuration
+    @ConditionalOnProperty(name = "ai.provider", havingValue = "google")
+    static class GoogleProviderConfig {
+
+        /**
+         * 真实 Google Vertex AI Gemini 提供商
+         * ai.provider=google, ai.mock=false 时激活
+         * 需要环境变量 GOOGLE_CLOUD_PROJECT、GOOGLE_CLOUD_LOCATION，以及 GCP 凭证
+         */
+        @Bean
+        @ConditionalOnProperty(name = "ai.mock", havingValue = "false")
+        public AiChatProvider googleAiChatProvider(VertexAiGeminiChatModel chatModel) {
+            log.info("AI provider: [google] — using Google Gemini API");
+            return new GoogleChatProvider(chatModel);
+        }
+
+        /**
+         * Mock 提供商（cloud fallback）
+         * ai.provider=google, ai.mock=true（默认）时激活，无需 API Key。
+         */
+        @Bean
+        @ConditionalOnProperty(name = "ai.mock", havingValue = "true", matchIfMissing = true)
+        public AiChatProvider mockAiChatProvider() {
+            log.info("AI provider: [mock] — google selected but ai.mock=true, using simulated responses");
             return new MockChatProvider();
         }
     }

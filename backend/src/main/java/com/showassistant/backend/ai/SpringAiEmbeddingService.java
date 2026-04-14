@@ -1,52 +1,108 @@
 package com.showassistant.backend.ai;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+
 /**
- * TDD 4.2 — Spring AI 向量嵌入服务实现
- * 通过 Spring AI 的 EmbeddingModel 将文本转换为向量。
- * 注意：EmbeddingModel 通过 Optional 注入，在 Anthropic-only 配置下可能为 null。
- * 异常时和模型不可用时安全降级，返回空数组，不影响主流程。
+ * 向量嵌入服务实现
+ * 优先使用 Spring AI EmbeddingModel（如已配置），否则直接调用 Google text-embedding-004 REST API。
  */
 @Slf4j
 @Service
 public class SpringAiEmbeddingService implements EmbeddingService {
 
+    private static final String GOOGLE_EMBED_URL =
+        "https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=%s";
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+        .connectTimeout(Duration.ofSeconds(10))
+        .build();
+
     @Nullable
     private final EmbeddingModel embeddingModel;
+
+    @Value("${spring.ai.google.genai.api-key:}")
+    private String googleApiKey;
 
     @Autowired
     public SpringAiEmbeddingService(@Nullable EmbeddingModel embeddingModel) {
         this.embeddingModel = embeddingModel;
         if (embeddingModel == null) {
-            log.warn("EmbeddingModel is not configured. RAG embedding will be unavailable (Phase 2 stub mode).");
+            log.info("Spring AI EmbeddingModel not configured, will use Google REST API directly for embeddings.");
         }
     }
 
-    /**
-     * TDD 4.2 — 调用 Spring AI EmbeddingModel 生成文本向量
-     * 若 EmbeddingModel 未配置或调用失败（网络异常、模型不可用等），
-     * 捕获异常并返回空 float[]，保证系统在向量服务不可用时仍能正常运行（降级为无 RAG 模式）。
-     *
-     * @param text 需要嵌入的文本
-     * @return 向量数组，失败时返回 new float[0]
-     */
     @Override
     public float[] embed(String text) {
-        if (embeddingModel == null) {
-            log.debug("EmbeddingModel not available, returning empty vector for text length={}", text.length());
+        if (embeddingModel != null) {
+            try {
+                float[] result = embeddingModel.embed(text);
+                log.debug("Generated embedding via Spring AI, dim={}", result.length);
+                return result;
+            } catch (Exception e) {
+                log.warn("Spring AI embedding failed, falling back to Google REST API: {}", e.getMessage());
+            }
+        }
+
+        return embedViaGoogleRestApi(text);
+    }
+
+    private float[] embedViaGoogleRestApi(String text) {
+        if (googleApiKey == null || googleApiKey.isBlank() || "placeholder".equals(googleApiKey)) {
+            log.debug("Google API key not configured, skipping embedding");
             return new float[0];
         }
         try {
-            float[] result = embeddingModel.embed(text);
-            log.debug("Generated embedding for text length={}, vector dim={}", text.length(), result.length);
+            String body = MAPPER.writeValueAsString(java.util.Map.of(
+                "model", "models/text-embedding-004",
+                "content", java.util.Map.of(
+                    "parts", java.util.List.of(java.util.Map.of("text", text))
+                )
+            ));
+
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(String.format(GOOGLE_EMBED_URL, googleApiKey)))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .timeout(Duration.ofSeconds(30))
+                .build();
+
+            HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() != 200) {
+                log.warn("Google embedding API returned {}: {}", response.statusCode(), response.body());
+                return new float[0];
+            }
+
+            JsonNode root = MAPPER.readTree(response.body());
+            JsonNode values = root.path("embedding").path("values");
+            if (values.isMissingNode()) {
+                log.warn("Google embedding API response missing 'embedding.values'");
+                return new float[0];
+            }
+
+            float[] result = new float[values.size()];
+            for (int i = 0; i < values.size(); i++) {
+                result[i] = (float) values.get(i).asDouble();
+            }
+            log.debug("Generated embedding via Google REST API, dim={}", result.length);
             return result;
+
         } catch (Exception e) {
-            log.warn("Failed to generate embedding, returning empty vector. Error: {}", e.getMessage());
+            log.warn("Google REST API embedding failed: {}", e.getMessage());
             return new float[0];
         }
     }

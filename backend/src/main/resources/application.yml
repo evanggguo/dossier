@@ -2,6 +2,10 @@ server:
   port: 8080
 
 spring:
+  autoconfigure:
+    exclude:
+      # 禁用 Ollama embedding 自动配置，使用 Google text-embedding-004 作为 EmbeddingModel
+      - org.springframework.ai.model.ollama.autoconfigure.OllamaEmbeddingAutoConfiguration
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/showassistant}
     username: ${DB_USERNAME:postgres}
@@ -29,8 +33,6 @@ spring:
       chat:
         options:
           model: ${AI_OLLAMA_MODEL:qwen2.5:7b}
-      embedding:
-        enabled: false  # 禁用 Ollama embedding，使用 Google text-embedding-004
     # Claude 云端模型配置（ai.provider=claude 时使用）
     anthropic:
       api-key: ${ANTHROPIC_API_KEY:placeholder}
@@ -45,10 +47,13 @@ spring:
         chat:
           options:
             model: ${GOOGLE_AI_MODEL:gemini-2.5-flash-lite}
-        # Phase 3: Google text-embedding-004 向量嵌入（768 维）
+        # Google text-embedding-004 向量嵌入（768 维）
         embedding:
           options:
             model: text-embedding-004
+    model:
+      embedding:
+        text: google-genai  # 显式启用 Google text-embedding-004
 
 # TDD 4.5.4 — AI 提供商切换配置
 # ai.provider=ollama（默认）：始终调用本地 Ollama，ai.mock 对此无效

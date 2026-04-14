@@ -29,6 +29,8 @@ spring:
       chat:
         options:
           model: ${AI_OLLAMA_MODEL:qwen2.5:7b}
+      embedding:
+        enabled: false  # 禁用 Ollama embedding，使用 Google text-embedding-004
     # Claude 云端模型配置（ai.provider=claude 时使用）
     anthropic:
       api-key: ${ANTHROPIC_API_KEY:placeholder}

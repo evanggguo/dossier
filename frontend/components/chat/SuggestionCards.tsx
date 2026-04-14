@@ -38,7 +38,7 @@ export default function SuggestionCards({
           className={[
             'flex-shrink-0 max-w-[220px] text-left',
             'rounded-2xl border border-gray-200 bg-white px-4 py-3',
-            'text-sm text-gray-700 leading-snug',
+            'text-sm text-gray-700 leading-snug line-clamp-3',
             'transition-colors duration-150',
             disabled
               ? 'cursor-not-allowed opacity-50'

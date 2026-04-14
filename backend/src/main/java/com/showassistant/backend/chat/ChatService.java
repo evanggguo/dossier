@@ -86,8 +86,9 @@ public class ChatService {
             List<KnowledgeEntryDto> ragContext = ragService.retrieve(DEFAULT_OWNER_ID, req.message());
 
             // 步骤 4：构建 Spring AI 消息列表
+            boolean toolCallingEnabled = aiChatProvider.supportsToolCalling();
             List<org.springframework.ai.chat.messages.Message> aiMessages =
-                buildAiMessages(req, conversationId, ragContext);
+                buildAiMessages(req, conversationId, ragContext, toolCallingEnabled);
 
             // 步骤 5（在 aiMessages 中已包含 system message）
 
@@ -97,9 +98,10 @@ public class ChatService {
             // 步骤 7-9：流式调用并处理（TDD 4.5 — 通过 AiChatProvider 接口调用，屏蔽底层模型差异）
             AtomicReference<StringBuilder> fullTextRef = new AtomicReference<>(new StringBuilder());
             final Long finalConversationId = conversationId;
-            log.debug("Using AI provider: {}", aiChatProvider.providerName());
+            log.debug("Using AI provider: {}, toolCalling={}", aiChatProvider.providerName(), toolCallingEnabled);
 
-            aiChatProvider.streamChat(aiMessages, suggestTool)
+            Object[] tools = toolCallingEnabled ? new Object[]{suggestTool} : new Object[0];
+            aiChatProvider.streamChat(aiMessages, tools)
                 .subscribe(
                     // onNext: 追加 fullText + 发送 token SSE
                     token -> {
@@ -185,13 +187,14 @@ public class ChatService {
      * @return Spring AI Messages 列表
      */
     private List<org.springframework.ai.chat.messages.Message> buildAiMessages(
-        ChatRequest req, Long conversationId, List<KnowledgeEntryDto> ragContext) {
+        ChatRequest req, Long conversationId, List<KnowledgeEntryDto> ragContext,
+        boolean includeToolInstruction) {
 
         List<org.springframework.ai.chat.messages.Message> messages = new ArrayList<>();
 
         // System Message
         OwnerProfileResponse ownerProfile = ownerService.getOwnerProfile();
-        String systemPrompt = promptAssembler.assemble(ownerProfile, ragContext);
+        String systemPrompt = promptAssembler.assemble(ownerProfile, ragContext, includeToolInstruction);
         messages.add(new SystemMessage(systemPrompt));
 
         // 历史消息

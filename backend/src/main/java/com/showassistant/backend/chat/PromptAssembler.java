@@ -29,6 +29,11 @@ public class PromptAssembler {
      * @return 组装好的 System Prompt 字符串
      */
     public String assemble(OwnerProfileResponse ownerProfile, List<KnowledgeEntryDto> retrievedContext) {
+        return assemble(ownerProfile, retrievedContext, true);
+    }
+
+    public String assemble(OwnerProfileResponse ownerProfile, List<KnowledgeEntryDto> retrievedContext,
+                           boolean includeToolInstruction) {
         StringBuilder sb = new StringBuilder();
 
         // 身份设定
@@ -57,15 +62,17 @@ public class PromptAssembler {
             }
         }
 
-        // 工具调用指令（TDD 4.4）
-        sb.append("\n## 重要指令\n");
-        sb.append("在完成每次回答后，你必须调用 `suggest_followups` 工具，");
-        sb.append("提供 2-3 个与当前话题相关的跟进问题，帮助访客深入了解。\n");
-        sb.append("这些问题应该自然、有价值，引导访客进一步探索感兴趣的内容。\n");
+        // 工具调用指令（仅在提供商支持 Function Calling 时注入）
+        if (includeToolInstruction) {
+            sb.append("\n## 重要指令\n");
+            sb.append("在完成每次回答后，你必须调用 `suggest_followups` 工具，");
+            sb.append("提供 2-3 个与当前话题相关的跟进问题，帮助访客深入了解。\n");
+            sb.append("这些问题应该自然、有价值，引导访客进一步探索感兴趣的内容。\n");
+        }
 
         String prompt = sb.toString();
-        log.debug("Assembled system prompt length={}, hasRagContext={}", prompt.length(),
-            retrievedContext != null && !retrievedContext.isEmpty());
+        log.debug("Assembled system prompt length={}, hasRagContext={}, includeToolInstruction={}",
+            prompt.length(), retrievedContext != null && !retrievedContext.isEmpty(), includeToolInstruction);
         return prompt;
     }
 }

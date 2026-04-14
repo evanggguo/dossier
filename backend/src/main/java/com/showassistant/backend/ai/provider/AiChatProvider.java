@@ -30,6 +30,15 @@ public interface AiChatProvider {
     String providerName();
 
     /**
+     * 是否支持通过 Tool Use（Function Calling）获取建议问题。
+     * 返回 false 时，ChatService 将跳过工具注册并使用 generateSuggestions() fallback，
+     * 同时 PromptAssembler 会省略要求调用 suggest_followups 的指令，避免模型输出乱码。
+     */
+    default boolean supportsToolCalling() {
+        return true;
+    }
+
+    /**
      * Fallback：当 streamChat 的 Tool Use 未触发时（如小模型不支持 Function Calling），
      * 通过额外的非流式调用生成建议问题。
      * 默认返回空列表，OllamaChatProvider 覆盖此方法。

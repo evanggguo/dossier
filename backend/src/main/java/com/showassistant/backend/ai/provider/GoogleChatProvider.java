@@ -54,6 +54,11 @@ public class GoogleChatProvider implements AiChatProvider {
     }
 
     @Override
+    public boolean supportsToolCalling() {
+        return false;
+    }
+
+    @Override
     public List<String> generateSuggestions(List<Message> messages, String assistantReply) {
         try {
             String prompt = String.format(SUGGESTION_PROMPT_TEMPLATE, assistantReply);

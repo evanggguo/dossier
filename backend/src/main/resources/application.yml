@@ -50,7 +50,7 @@ spring:
         # Google text-embedding-004 向量嵌入（768 维）
         embedding:
           options:
-            model: text-embedding-004
+            model: gemini-embedding-001
     model:
       embedding:
         text: google-genai  # 显式启用 Google text-embedding-004

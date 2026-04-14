@@ -24,7 +24,7 @@ import java.time.Duration;
 public class SpringAiEmbeddingService implements EmbeddingService {
 
     private static final String GOOGLE_EMBED_URL =
-        "https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=%s";
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=%s";
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
@@ -67,10 +67,11 @@ public class SpringAiEmbeddingService implements EmbeddingService {
         }
         try {
             String body = MAPPER.writeValueAsString(java.util.Map.of(
-                "model", "models/text-embedding-004",
+                "model", "models/gemini-embedding-001",
                 "content", java.util.Map.of(
                     "parts", java.util.List.of(java.util.Map.of("text", text))
-                )
+                ),
+                "outputDimensionality", 768
             ));
 
             HttpRequest request = HttpRequest.newBuilder()

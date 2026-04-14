@@ -38,7 +38,7 @@ spring:
         api-key: ${GOOGLE_AI_API_KEY:placeholder}
         chat:
           options:
-            model: ${GOOGLE_AI_MODEL:gemini-2.0-flash}
+            model: ${GOOGLE_AI_MODEL:gemini-2.5-flash-lite}
 
 # TDD 4.5.4 — AI 提供商切换配置
 # ai.provider=ollama（默认）：始终调用本地 Ollama，ai.mock 对此无效

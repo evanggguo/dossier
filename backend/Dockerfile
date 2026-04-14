@@ -19,7 +19,8 @@ FROM eclipse-temurin:21-jre-alpine AS runner
 WORKDIR /app
 
 # 创建非 root 用户运行
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup && \
+    mkdir -p /app/uploads && chown -R appuser:appgroup /app/uploads
 USER appuser
 
 COPY --from=builder /app/target/*.jar app.jar

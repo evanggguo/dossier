@@ -84,7 +84,7 @@ export default function DocumentUploader({ documents, onRefresh }: Props) {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".pdf,.txt,.docx"
+          accept=".pdf,.txt,.docx,.ppt,.pptx"
           multiple
           className="hidden"
           onChange={(e) => handleUpload(e.target.files)}
@@ -95,7 +95,7 @@ export default function DocumentUploader({ documents, onRefresh }: Props) {
         ) : (
           <>
             <p className="text-sm text-gray-600 font-medium">点击或拖拽文件到此处上传</p>
-            <p className="text-xs text-gray-400 mt-1">支持 PDF、TXT、DOCX，多文件同时上传</p>
+            <p className="text-xs text-gray-400 mt-1">支持 PDF、TXT、DOCX、PPT/PPTX，多文件同时上传</p>
           </>
         )}
       </div>

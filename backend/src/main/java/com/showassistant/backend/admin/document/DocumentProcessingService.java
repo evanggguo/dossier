@@ -16,11 +16,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
+import org.apache.poi.xslf.usermodel.XMLSlideShow;
+import org.apache.poi.xslf.usermodel.XSLFShape;
+import org.apache.poi.xslf.usermodel.XSLFSlide;
+import org.apache.poi.xslf.usermodel.XSLFTextShape;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -33,7 +36,7 @@ import java.util.stream.Collectors;
 
 /**
  * 文档解析和向量化处理服务
- * 支持 PDF / TXT / DOCX，将内容分块后生成向量存入 knowledge_entries
+ * 支持 PDF / TXT / DOCX / PPTX，将内容分块后生成向量存入 knowledge_entries
  */
 @Slf4j
 @Service
@@ -49,8 +52,10 @@ public class DocumentProcessingService {
     private final OwnerRepository ownerRepository;
     private final EmbeddingService embeddingService;
 
+    // @Transactional intentionally omitted: combining @Async + @Transactional causes the
+    // catch-block status update to be rolled back on exception. Each repository.save() call
+    // is transactional on its own (Spring Data default).
     @Async("sseTaskExecutor")
-    @Transactional
     public void processAsync(Long documentId) {
         Document doc = documentRepository.findById(documentId)
             .orElseThrow(() -> new ResourceNotFoundException("Document", documentId));
@@ -61,8 +66,7 @@ public class DocumentProcessingService {
             String text = extractText(doc);
             if (text.isBlank()) {
                 log.warn("Document id={} has no extractable text", documentId);
-                doc.setStatus(DocumentStatus.COMPLETED);
-                documentRepository.save(doc);
+                updateStatus(doc, DocumentStatus.COMPLETED);
                 return;
             }
 
@@ -70,32 +74,44 @@ public class DocumentProcessingService {
             Owner owner = ownerRepository.findById(DEFAULT_OWNER_ID)
                 .orElseThrow(() -> new ResourceNotFoundException("Owner", DEFAULT_OWNER_ID));
 
+            int saved = 0;
             for (int i = 0; i < chunks.size(); i++) {
                 String chunk = chunks.get(i);
                 float[] embedding = embeddingService.embed(chunk);
+
+                // Skip entries with no embedding to avoid vector type mismatch in DB.
+                // In Phase 2 (stub mode) embeddings are unavailable; Phase 3 will populate them.
+                if (embedding.length == 0) {
+                    log.debug("No embedding for chunk {}/{}, skipping knowledge entry", i + 1, chunks.size());
+                    continue;
+                }
 
                 KnowledgeEntry entry = KnowledgeEntry.builder()
                     .owner(owner)
                     .type(KnowledgeType.DOCUMENT_CHUNK)
                     .title(doc.getFilename() + " [" + (i + 1) + "/" + chunks.size() + "]")
                     .content(chunk)
-                    .embedding(embedding.length > 0 ? embedding : null)
+                    .embedding(embedding)
                     .sourceDoc(documentId)
                     .build();
 
                 knowledgeRepository.save(entry);
+                saved++;
                 log.debug("Saved chunk {}/{} for documentId={}", i + 1, chunks.size(), documentId);
             }
 
-            doc.setStatus(DocumentStatus.COMPLETED);
-            documentRepository.save(doc);
-            log.info("Completed processing documentId={}, chunks={}", documentId, chunks.size());
+            updateStatus(doc, DocumentStatus.COMPLETED);
+            log.info("Completed processing documentId={}, chunks={}, savedEntries={}", documentId, chunks.size(), saved);
 
         } catch (Exception e) {
             log.error("Failed to process documentId={}", documentId, e);
-            doc.setStatus(DocumentStatus.FAILED);
-            documentRepository.save(doc);
+            updateStatus(doc, DocumentStatus.FAILED);
         }
+    }
+
+    private void updateStatus(Document doc, DocumentStatus status) {
+        doc.setStatus(status);
+        documentRepository.save(doc);
     }
 
     private String extractText(Document doc) throws Exception {
@@ -104,6 +120,7 @@ public class DocumentProcessingService {
             case "pdf" -> extractPdf(path);
             case "txt" -> Files.readString(path, StandardCharsets.UTF_8);
             case "docx" -> extractDocx(path);
+            case "ppt", "pptx" -> extractPptx(path);
             default -> throw new BusinessException("UNSUPPORTED_TYPE",
                 "不支持的文件类型: " + doc.getFileType());
         };
@@ -122,6 +139,23 @@ public class DocumentProcessingService {
                 .map(XWPFParagraph::getText)
                 .filter(t -> !t.isBlank())
                 .collect(Collectors.joining("\n"));
+        }
+    }
+
+    private String extractPptx(Path path) throws Exception {
+        try (XMLSlideShow ppt = new XMLSlideShow(Files.newInputStream(path))) {
+            StringBuilder sb = new StringBuilder();
+            for (XSLFSlide slide : ppt.getSlides()) {
+                for (XSLFShape shape : slide.getShapes()) {
+                    if (shape instanceof XSLFTextShape textShape) {
+                        String text = textShape.getText();
+                        if (text != null && !text.isBlank()) {
+                            sb.append(text).append("\n");
+                        }
+                    }
+                }
+            }
+            return sb.toString();
         }
     }
 

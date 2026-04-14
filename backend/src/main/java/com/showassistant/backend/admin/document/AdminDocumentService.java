@@ -34,7 +34,7 @@ import java.util.UUID;
 public class AdminDocumentService {
 
     private static final Long DEFAULT_OWNER_ID = 1L;
-    private static final Set<String> ALLOWED_TYPES = Set.of("pdf", "txt", "docx");
+    private static final Set<String> ALLOWED_TYPES = Set.of("pdf", "txt", "docx", "ppt", "pptx");
 
     private final DocumentRepository documentRepository;
     private final OwnerRepository ownerRepository;
@@ -59,7 +59,7 @@ public class AdminDocumentService {
         String extension = getExtension(originalFilename);
         if (!ALLOWED_TYPES.contains(extension)) {
             throw new BusinessException("UNSUPPORTED_FILE_TYPE",
-                "不支持的文件类型，仅支持 PDF、TXT、DOCX");
+                "不支持的文件类型，仅支持 PDF、TXT、DOCX、PPT、PPTX");
         }
 
         String storedFilename = UUID.randomUUID() + "." + extension;

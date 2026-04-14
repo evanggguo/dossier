@@ -18,7 +18,7 @@ export default function LoginPage() {
     try {
       const { token } = await adminLogin(username, password)
       localStorage.setItem('admin_token', token)
-      router.replace('/admin/profile')
+      window.location.href = '/admin/profile'
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败，请检查用户名和密码')
     } finally {

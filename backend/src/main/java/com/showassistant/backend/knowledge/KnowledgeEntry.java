@@ -1,13 +1,13 @@
 package com.showassistant.backend.knowledge;
 
+import com.showassistant.backend.common.VectorType;
 import com.showassistant.backend.owner.Owner;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import org.hibernate.annotations.Type;
 
 import java.time.OffsetDateTime;
 
@@ -42,9 +42,10 @@ public class KnowledgeEntry {
     private String content;
 
     /**
-     * 向量嵌入，用于 Phase 3 语义检索（768 维，Google text-embedding-004）。
+     * 向量嵌入，用于语义检索（768 维，gemini-embedding-001）。
+     * 使用自定义 VectorType 通过 PGvector 写入 PostgreSQL vector 列。
      */
-    @JdbcTypeCode(SqlTypes.VECTOR)
+    @Type(VectorType.class)
     @Column(name = "embedding", columnDefinition = "vector(768)")
     private float[] embedding;
 

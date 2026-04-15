@@ -45,7 +45,6 @@ public class DocumentProcessingService {
 
     private static final int CHUNK_SIZE = 500;
     private static final int CHUNK_OVERLAP = 50;
-    private static final Long DEFAULT_OWNER_ID = 1L;
 
     private final DocumentRepository documentRepository;
     private final KnowledgeRepository knowledgeRepository;
@@ -71,8 +70,10 @@ public class DocumentProcessingService {
             }
 
             List<String> chunks = splitIntoChunks(text);
-            Owner owner = ownerRepository.findById(DEFAULT_OWNER_ID)
-                .orElseThrow(() -> new ResourceNotFoundException("Owner", DEFAULT_OWNER_ID));
+            // Fetch owner in this async context (doc.owner is LAZY and session is already closed)
+            Long ownerId = doc.getOwner().getId();
+            Owner owner = ownerRepository.findById(ownerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Owner", ownerId));
 
             int saved = 0;
             for (int i = 0; i < chunks.size(); i++) {

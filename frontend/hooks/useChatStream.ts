@@ -12,7 +12,7 @@
  * 4. done 事件后，将 streamingText 转为正式 Message 加入列表
  */
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import type { Message, ChatRequest, SseTokenData, SseDoneData, SseErrorData } from '@/lib/types'
 import { loadGuestMessages, saveGuestMessages } from '@/lib/storage'
 
@@ -76,8 +76,15 @@ export interface UseChatStreamReturn {
  * @param initialSuggestions 首屏展示的初始提示词（从后端获取或降级默认值）
  */
 export function useChatStream(initialSuggestions: string[]): UseChatStreamReturn {
-  // 从 localStorage 加载游客历史消息（SSR 安全：loadGuestMessages 内部判断 window）
-  const [messages, setMessages] = useState<Message[]>(() => loadGuestMessages())
+  // 初始为空，挂载后从 localStorage 加载（避免 SSR/Client 水合不一致导致 React Minified Error）
+  const [messages, setMessages] = useState<Message[]>([])
+
+  useEffect(() => {
+    const stored = loadGuestMessages()
+    if (stored.length > 0) {
+      setMessages(stored)
+    }
+  }, [])
   const [streamingText, setStreamingText] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [currentSuggestions, setCurrentSuggestions] = useState<string[]>(initialSuggestions)

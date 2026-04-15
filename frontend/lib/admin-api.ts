@@ -43,6 +43,10 @@ async function adminFetch<T>(path: string, options: RequestInit = {}): Promise<T
     throw new Error('未授权，请重新登录')
   }
 
+  if (res.status === 204) {
+    return undefined as T
+  }
+
   const body = await res.json()
   if (!body.success) {
     throw new Error(body.message || '请求失败')

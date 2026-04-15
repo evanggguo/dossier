@@ -55,6 +55,13 @@ export interface UpdateKnowledgeData {
   content?: string
 }
 
+export interface OwnerSummaryData {
+  id: number
+  username: string
+  name: string
+  createdAt: string
+}
+
 export interface DocumentData {
   id: number
   filename: string

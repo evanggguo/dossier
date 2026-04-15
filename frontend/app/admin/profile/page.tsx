@@ -1,9 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Save, Loader2 } from 'lucide-react'
+import { Save, Loader2, Eye, EyeOff } from 'lucide-react'
 import type { OwnerProfileData, SuggestionData } from '@/lib/admin-types'
-import { fetchAdminProfile, updateAdminProfile, fetchSuggestions } from '@/lib/admin-api'
+import {
+  fetchAdminProfile, updateAdminProfile, fetchSuggestions,
+  changeUsername, changePassword,
+} from '@/lib/admin-api'
 import SuggestionManager from '@/components/admin/SuggestionManager'
 
 export default function ProfilePage() {
@@ -13,6 +16,22 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // 修改用户名
+  const [newUsername, setNewUsername] = useState('')
+  const [usernameError, setUsernameError] = useState('')
+  const [usernameSaving, setUsernameSaving] = useState(false)
+  const [usernameSaved, setUsernameSaved] = useState(false)
+
+  // 修改密码
+  const [oldPw, setOldPw] = useState('')
+  const [newPw, setNewPw] = useState('')
+  const [confirmPw, setConfirmPw] = useState('')
+  const [showOldPw, setShowOldPw] = useState(false)
+  const [showNewPw, setShowNewPw] = useState(false)
+  const [pwError, setPwError] = useState('')
+  const [pwSaving, setPwSaving] = useState(false)
+  const [pwSaved, setPwSaved] = useState(false)
 
   const loadData = async () => {
     try {
@@ -28,6 +47,7 @@ export default function ProfilePage() {
 
   useEffect(() => { loadData() }, [])
 
+  // ── 保存 Owner 信息 ───────────────────────────────────────────────
   const handleSave = async () => {
     if (!profile) return
     setSaving(true)
@@ -45,6 +65,43 @@ export default function ProfilePage() {
       setError(e instanceof Error ? e.message : '保存失败')
     } finally {
       setSaving(false)
+    }
+  }
+
+  // ── 修改用户名 ────────────────────────────────────────────────────
+  const handleChangeUsername = async () => {
+    if (!newUsername.trim()) { setUsernameError('用户名不能为空'); return }
+    if (!/^[a-zA-Z0-9]+$/.test(newUsername)) { setUsernameError('只能包含英文字母和数字'); return }
+    setUsernameSaving(true)
+    setUsernameError('')
+    try {
+      await changeUsername(newUsername.trim())
+      setUsernameSaved(true)
+      setNewUsername('')
+      setTimeout(() => setUsernameSaved(false), 2000)
+    } catch (e) {
+      setUsernameError(e instanceof Error ? e.message : '修改失败')
+    } finally {
+      setUsernameSaving(false)
+    }
+  }
+
+  // ── 修改密码 ──────────────────────────────────────────────────────
+  const handleChangePassword = async () => {
+    if (!oldPw) { setPwError('请输入原密码'); return }
+    if (!newPw || newPw.length < 6) { setPwError('新密码不能少于 6 位'); return }
+    if (newPw !== confirmPw) { setPwError('两次密码不一致'); return }
+    setPwSaving(true)
+    setPwError('')
+    try {
+      await changePassword(oldPw, newPw)
+      setOldPw(''); setNewPw(''); setConfirmPw('')
+      setPwSaved(true)
+      setTimeout(() => setPwSaved(false), 2000)
+    } catch (e) {
+      setPwError(e instanceof Error ? e.message : '修改失败')
+    } finally {
+      setPwSaving(false)
     }
   }
 
@@ -110,12 +167,104 @@ export default function ProfilePage() {
             className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600
                        text-white text-sm rounded-xl transition-colors disabled:opacity-60"
           >
-            {saving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {saved ? '已保存 ✓' : '保存'}
+          </button>
+        </div>
+      </div>
+
+      {/* 修改用户名 */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+        <h2 className="text-sm font-medium text-gray-700">修改用户名</h2>
+        <p className="text-xs text-gray-400">修改后需使用新用户名重新登录</p>
+
+        <div>
+          <input
+            value={newUsername}
+            onChange={e => { setNewUsername(e.target.value); setUsernameError('') }}
+            placeholder="新用户名（英文或数字）"
+            className={[
+              'w-full border rounded-xl px-3 py-2 text-sm',
+              'focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400',
+              usernameError ? 'border-red-400' : 'border-gray-300',
+            ].join(' ')}
+          />
+          {usernameError && <p className="text-xs text-red-500 mt-1">{usernameError}</p>}
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            onClick={handleChangeUsername}
+            disabled={usernameSaving || !newUsername}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600
+                       text-white text-sm rounded-xl transition-colors disabled:opacity-60"
+          >
+            {usernameSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+            {usernameSaved ? '已修改 ✓' : '确认修改'}
+          </button>
+        </div>
+      </div>
+
+      {/* 修改密码 */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+        <h2 className="text-sm font-medium text-gray-700">修改密码</h2>
+
+        <div className="relative">
+          <input
+            type={showOldPw ? 'text' : 'password'}
+            value={oldPw}
+            onChange={e => { setOldPw(e.target.value); setPwError('') }}
+            placeholder="原密码"
+            className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm pr-10
+                       focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+          />
+          <button
+            type="button"
+            onClick={() => setShowOldPw(v => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+          >
+            {showOldPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        </div>
+
+        <div className="relative">
+          <input
+            type={showNewPw ? 'text' : 'password'}
+            value={newPw}
+            onChange={e => { setNewPw(e.target.value); setPwError('') }}
+            placeholder="新密码（不少于 6 位）"
+            className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm pr-10
+                       focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+          />
+          <button
+            type="button"
+            onClick={() => setShowNewPw(v => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+          >
+            {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        </div>
+
+        <input
+          type="password"
+          value={confirmPw}
+          onChange={e => { setConfirmPw(e.target.value); setPwError('') }}
+          placeholder="确认新密码"
+          className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm
+                     focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+        />
+
+        {pwError && <p className="text-xs text-red-500">{pwError}</p>}
+
+        <div className="flex justify-end">
+          <button
+            onClick={handleChangePassword}
+            disabled={pwSaving || !oldPw || !newPw || !confirmPw}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600
+                       text-white text-sm rounded-xl transition-colors disabled:opacity-60"
+          >
+            {pwSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+            {pwSaved ? '已修改 ✓' : '确认修改'}
           </button>
         </div>
       </div>

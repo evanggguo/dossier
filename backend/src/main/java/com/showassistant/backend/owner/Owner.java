@@ -44,6 +44,14 @@ public class Owner {
     @Column(name = "config", columnDefinition = "jsonb")
     private Map<String, Object> config;
 
+    /** 登录用户名（仅英文/数字，唯一） */
+    @Column(name = "username", unique = true, length = 50)
+    private String username;
+
+    /** BCrypt 密码哈希 */
+    @Column(name = "password_hash", length = 255)
+    private String passwordHash;
+
     @Column(name = "created_at", updatable = false)
     private OffsetDateTime createdAt;
 

@@ -13,6 +13,7 @@ import type {
   CreateKnowledgeData,
   UpdateKnowledgeData,
   DocumentData,
+  OwnerSummaryData,
 } from './admin-types'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
@@ -120,6 +121,53 @@ export const updateKnowledge = (id: number, data: UpdateKnowledgeData): Promise<
 
 export const deleteKnowledge = (id: number): Promise<void> =>
   adminFetch<void>(`/api/admin/knowledge/${id}`, { method: 'DELETE' })
+
+// ── Owner 账号管理（修改用户名/密码） ──────────────────────────────
+
+export const changeUsername = (newUsername: string): Promise<void> =>
+  adminFetch<void>('/api/admin/owner/username', {
+    method: 'PUT',
+    body: JSON.stringify({ newUsername }),
+  })
+
+export const changePassword = (oldPassword: string, newPassword: string): Promise<void> =>
+  adminFetch<void>('/api/admin/owner/password', {
+    method: 'PUT',
+    body: JSON.stringify({ oldPassword, newPassword }),
+  })
+
+// ── 超级管理（owner 账号增删，使用写死密码头） ──────────────────────
+
+const SUPER_ADMIN_PASSWORD = 'superadmin888'
+
+async function superAdminFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Super-Admin-Token': SUPER_ADMIN_PASSWORD,
+      ...(options.headers as Record<string, string>),
+    },
+  })
+
+  if (res.status === 204) return undefined as T
+
+  const body = await res.json()
+  if (!body.success) throw new Error(body.message || '请求失败')
+  return body.data as T
+}
+
+export const fetchOwners = (): Promise<OwnerSummaryData[]> =>
+  superAdminFetch<OwnerSummaryData[]>('/api/super-admin/owners')
+
+export const createOwner = (username: string): Promise<OwnerSummaryData> =>
+  superAdminFetch<OwnerSummaryData>('/api/super-admin/owners', {
+    method: 'POST',
+    body: JSON.stringify({ username }),
+  })
+
+export const deleteOwner = (id: number): Promise<void> =>
+  superAdminFetch<void>(`/api/super-admin/owners/${id}`, { method: 'DELETE' })
 
 // ── 文档管理 ──────────────────────────────────────────────────────
 

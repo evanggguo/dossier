@@ -7,6 +7,7 @@ import com.showassistant.backend.document.Document;
 import com.showassistant.backend.document.DocumentRepository;
 import com.showassistant.backend.document.DocumentStatus;
 import com.showassistant.backend.owner.Owner;
+import com.showassistant.backend.owner.OwnerContextHolder;
 import com.showassistant.backend.owner.OwnerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,11 +34,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AdminDocumentService {
 
-    private static final Long DEFAULT_OWNER_ID = 1L;
     private static final Set<String> ALLOWED_TYPES = Set.of("pdf", "txt", "docx", "ppt", "pptx");
 
     private final DocumentRepository documentRepository;
     private final OwnerRepository ownerRepository;
+    private final OwnerContextHolder ownerContextHolder;
     private final DocumentProcessingService processingService;
 
     @Value("${app.storage.upload-dir}")
@@ -45,7 +46,7 @@ public class AdminDocumentService {
 
     @Transactional(readOnly = true)
     public List<DocumentResponse> listDocuments() {
-        return documentRepository.findByOwnerIdOrderByCreatedAtDesc(DEFAULT_OWNER_ID)
+        return documentRepository.findByOwnerIdOrderByCreatedAtDesc(ownerContextHolder.getCurrentOwnerId())
             .stream()
             .map(this::mapToResponse)
             .toList();
@@ -68,8 +69,7 @@ public class AdminDocumentService {
         Path targetPath = uploadPath.resolve(storedFilename);
         file.transferTo(targetPath);
 
-        Owner owner = ownerRepository.findById(DEFAULT_OWNER_ID)
-            .orElseThrow(() -> new ResourceNotFoundException("Owner", DEFAULT_OWNER_ID));
+        Owner owner = ownerContextHolder.getCurrentOwner();
 
         Document document = Document.builder()
             .owner(owner)

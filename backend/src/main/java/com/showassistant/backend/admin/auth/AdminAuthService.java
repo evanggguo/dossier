@@ -4,14 +4,15 @@ import com.showassistant.backend.admin.auth.dto.LoginRequest;
 import com.showassistant.backend.admin.auth.dto.LoginResponse;
 import com.showassistant.backend.common.exception.BusinessException;
 import com.showassistant.backend.config.JwtConfig;
+import com.showassistant.backend.owner.Owner;
+import com.showassistant.backend.owner.OwnerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 /**
- * 管理员认证服务 — 校验用户名/密码，签发 JWT
+ * 管理端认证服务 — 从数据库校验 owner 账号密码，签发 JWT
  */
 @Slf4j
 @Service
@@ -20,20 +21,19 @@ public class AdminAuthService {
 
     private final JwtConfig jwtConfig;
     private final PasswordEncoder passwordEncoder;
-
-    @Value("${app.admin.username}")
-    private String adminUsername;
-
-    @Value("${app.admin.password-hash}")
-    private String adminPasswordHash;
+    private final OwnerRepository ownerRepository;
 
     public LoginResponse login(LoginRequest request) {
-        if (!adminUsername.equals(request.getUsername()) ||
-            !passwordEncoder.matches(request.getPassword(), adminPasswordHash)) {
+        Owner owner = ownerRepository.findByUsername(request.getUsername())
+            .orElseThrow(() -> new BusinessException("AUTH_FAILED", "用户名或密码错误"));
+
+        if (owner.getPasswordHash() == null ||
+            !passwordEncoder.matches(request.getPassword(), owner.getPasswordHash())) {
             throw new BusinessException("AUTH_FAILED", "用户名或密码错误");
         }
-        String token = jwtConfig.generateToken(request.getUsername());
-        log.info("Admin login successful: username={}", request.getUsername());
+
+        String token = jwtConfig.generateToken(owner.getUsername());
+        log.info("Owner login successful: username={}", owner.getUsername());
         return LoginResponse.builder()
             .token(token)
             .tokenType("Bearer")

@@ -5,7 +5,7 @@ import com.showassistant.backend.admin.suggestion.dto.SuggestionResponse;
 import com.showassistant.backend.admin.suggestion.dto.UpdateSuggestionRequest;
 import com.showassistant.backend.common.exception.ResourceNotFoundException;
 import com.showassistant.backend.owner.Owner;
-import com.showassistant.backend.owner.OwnerRepository;
+import com.showassistant.backend.owner.OwnerContextHolder;
 import com.showassistant.backend.owner.PromptSuggestion;
 import com.showassistant.backend.owner.PromptSuggestionRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,14 +23,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminSuggestionService {
 
-    private static final Long DEFAULT_OWNER_ID = 1L;
-
     private final PromptSuggestionRepository suggestionRepository;
-    private final OwnerRepository ownerRepository;
+    private final OwnerContextHolder ownerContextHolder;
 
     @Transactional(readOnly = true)
     public List<SuggestionResponse> listAll() {
-        return suggestionRepository.findByOwnerIdOrderBySortOrderAsc(DEFAULT_OWNER_ID)
+        return suggestionRepository.findByOwnerIdOrderBySortOrderAsc(ownerContextHolder.getCurrentOwnerId())
             .stream()
             .map(this::mapToResponse)
             .toList();
@@ -38,8 +36,7 @@ public class AdminSuggestionService {
 
     @Transactional
     public SuggestionResponse create(CreateSuggestionRequest request) {
-        Owner owner = ownerRepository.findById(DEFAULT_OWNER_ID)
-            .orElseThrow(() -> new ResourceNotFoundException("Owner", DEFAULT_OWNER_ID));
+        Owner owner = ownerContextHolder.getCurrentOwner();
 
         PromptSuggestion suggestion = PromptSuggestion.builder()
             .owner(owner)

@@ -9,4 +9,8 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface OwnerRepository extends JpaRepository<Owner, Long> {
+
+    java.util.Optional<Owner> findByUsername(String username);
+
+    boolean existsByUsername(String username);
 }

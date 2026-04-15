@@ -40,7 +40,8 @@ show-assistant/
     ├── chat/          # 对话模块（流式 + RAG + 动态提示词）
     ├── knowledge/     # 知识库模块（录入、检索）
     ├── conversation/  # 会话持久化模块
-    ├── owner/         # 拥有者信息模块
+    ├── owner/         # 拥有者信息模块（含 OwnerContextHolder）
+    ├── superadmin/    # 超级管理模块（owner 账号 CRUD，写死密码校验）
     └── ai/            # AI 服务抽象层
         ├── provider/  # 多模型提供商实现
         │   ├── AiChatProvider        # 接口（流式对话抽象）

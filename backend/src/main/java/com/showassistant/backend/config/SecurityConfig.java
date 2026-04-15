@@ -41,6 +41,8 @@ public class SecurityConfig {
                 ).permitAll()
                 // 管理端登录接口公开
                 .requestMatchers("/api/admin/auth/login").permitAll()
+                // 超级管理接口公开（自行校验写死密码头）
+                .requestMatchers("/api/super-admin/**").permitAll()
                 // 其余管理端接口需要 ADMIN 角色
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().permitAll()

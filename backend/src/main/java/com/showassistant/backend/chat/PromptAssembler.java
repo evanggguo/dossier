@@ -9,25 +9,17 @@ import java.util.List;
 
 /**
  * TDD 4.3.2 — System Prompt 构建器
- * 根据 Owner 信息和 RAG 检索结果，动态构建发送给 AI 模型的 System Prompt。
- * 设计原则：
- * - 始终包含 Owner 身份信息（name、tagline）
- * - 当存在 RAG 上下文时注入检索内容，空时省略该段落（避免无意义占位）
- * - 包含要求模型调用 suggest_followups 工具的明确指令
+ *
+ * 防幻觉设计：
+ * - 始终注入"行为准则"段落，强制 AI 只能基于知识库内容回答
+ * - RAG 有内容时：注入知识条目，AI 必须基于此作答
+ * - RAG 为空时：明确声明无可用内容，AI 必须礼貌告知用户并引导联系 owner
+ * - 对于问候等通用对话例外处理，避免过度拒绝
  */
 @Slf4j
 @Component
 public class PromptAssembler {
 
-    /**
-     * TDD 4.3.2 — 构建完整的 System Prompt
-     * 将 Owner 信息和 RAG 检索结果组合成结构化的 System Prompt。
-     * retrievedContext 为空列表时不注入"参考资料"段落。
-     *
-     * @param ownerProfile     Owner 的公开简介信息
-     * @param retrievedContext RAG 检索到的相关知识条目（Phase 2 为空列表）
-     * @return 组装好的 System Prompt 字符串
-     */
     public String assemble(OwnerProfileResponse ownerProfile, List<KnowledgeEntryDto> retrievedContext) {
         return assemble(ownerProfile, retrievedContext, true);
     }
@@ -35,23 +27,33 @@ public class PromptAssembler {
     public String assemble(OwnerProfileResponse ownerProfile, List<KnowledgeEntryDto> retrievedContext,
                            boolean includeToolInstruction) {
         StringBuilder sb = new StringBuilder();
+        boolean hasRagContent = retrievedContext != null && !retrievedContext.isEmpty();
 
-        // 身份设定
-        sb.append("你是 ").append(ownerProfile.getName()).append(" 的 AI 助手。\n");
-
+        // ── 身份设定 ───────────────────────────────────────────────
+        sb.append("你是 ").append(ownerProfile.getName()).append(" 的 AI 个人助手。\n");
         if (ownerProfile.getTagline() != null && !ownerProfile.getTagline().isBlank()) {
-            sb.append(ownerProfile.getName()).append(" 的简介：").append(ownerProfile.getTagline()).append("\n");
+            sb.append(ownerProfile.getName()).append(" 的简介：")
+              .append(ownerProfile.getTagline()).append("\n");
         }
-
         sb.append("\n");
-        sb.append("你的职责是代表 ").append(ownerProfile.getName())
-          .append(" 与访客进行友好、专业的对话，介绍其工作、项目和经历。\n");
-        sb.append("回答应简洁、自然、有帮助，使用中文回复（除非访客使用其他语言）。\n");
 
-        // 注入 RAG 检索上下文（仅在有内容时）
-        if (retrievedContext != null && !retrievedContext.isEmpty()) {
-            sb.append("\n## 参考资料\n");
-            sb.append("以下是与当前问题相关的背景信息，请在回答时参考：\n\n");
+        // ── 行为准则（始终注入，核心防幻觉约束） ───────────────────
+        sb.append("## 行为准则（必须严格遵守）\n");
+        sb.append("1. 你只能基于以下「").append(ownerProfile.getName())
+          .append(" 的知识库」中提供的内容回答访客的问题。\n");
+        sb.append("2. 禁止使用知识库以外的任何信息，包括你的通用知识或训练数据。\n");
+        sb.append("3. 不得推测、补充或编造知识库中未明确提及的内容。\n");
+        sb.append("4. 对于「你好」「谢谢」等一般性问候或闲聊，可以友好回应，无需拒绝。\n");
+        sb.append("5. 若知识库中找不到访客问题的答案，必须礼貌说明，并建议访客直接联系 ")
+          .append(ownerProfile.getName()).append(" 以获取更多信息。\n");
+        sb.append("6. 使用中文回复（除非访客使用其他语言）。\n\n");
+
+        // ── 知识库（有内容 / 无内容 两种场景） ──────────────────────
+        sb.append("## ").append(ownerProfile.getName()).append(" 的知识库\n");
+
+        if (hasRagContent) {
+            sb.append("以下是关于 ").append(ownerProfile.getName())
+              .append(" 的参考资料，你的所有具体回答必须严格基于此内容：\n\n");
             for (int i = 0; i < retrievedContext.size(); i++) {
                 KnowledgeEntryDto entry = retrievedContext.get(i);
                 sb.append(i + 1).append(". ");
@@ -60,11 +62,15 @@ public class PromptAssembler {
                 }
                 sb.append(entry.getContent()).append("\n\n");
             }
+        } else {
+            sb.append("当前暂无与该问题相关的知识库内容。\n");
+            sb.append("请告知访客你暂时无法提供该信息，并友好地建议其直接联系 ")
+              .append(ownerProfile.getName()).append(" 获取更多信息。\n\n");
         }
 
-        // 工具调用指令（仅在提供商支持 Function Calling 时注入）
+        // ── 工具调用指令（仅在提供商支持 Function Calling 时注入） ──
         if (includeToolInstruction) {
-            sb.append("\n## 重要指令\n");
+            sb.append("## 重要指令\n");
             sb.append("在完成每次回答后，你必须调用 `suggest_followups` 工具，");
             sb.append("提供 2-3 个与当前话题相关的跟进问题，帮助访客深入了解。\n");
             sb.append("这些问题应该自然、有价值，引导访客进一步探索感兴趣的内容。\n");
@@ -72,7 +78,7 @@ public class PromptAssembler {
 
         String prompt = sb.toString();
         log.debug("Assembled system prompt length={}, hasRagContext={}, includeToolInstruction={}",
-            prompt.length(), retrievedContext != null && !retrievedContext.isEmpty(), includeToolInstruction);
+            prompt.length(), hasRagContent, includeToolInstruction);
         return prompt;
     }
 }

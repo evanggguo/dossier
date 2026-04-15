@@ -29,7 +29,7 @@ class PromptAssemblerTest {
     }
 
     @Test
-    @DisplayName("无 RAG 上下文时，prompt 不含[参考资料]段落，但包含 owner 名字和工具调用指令")
+    @DisplayName("无 RAG 上下文时，prompt 包含行为准则和空知识库兜底声明，不含具体条目")
     void should_not_include_rag_section_when_no_context() {
         // given
         OwnerProfileResponse ownerProfile = OwnerProfileResponse.builder()
@@ -44,12 +44,13 @@ class PromptAssemblerTest {
 
         // then
         assertThat(prompt).contains("张三");
-        assertThat(prompt).doesNotContain("参考资料");
+        assertThat(prompt).contains("行为准则");
+        assertThat(prompt).contains("当前暂无与该问题相关的知识库内容");
         assertThat(prompt).contains("suggest_followups");
     }
 
     @Test
-    @DisplayName("有 RAG 上下文时，prompt 包含[参考资料]段落和条目内容")
+    @DisplayName("有 RAG 上下文时，prompt 包含知识库段落和条目内容，并有行为准则约束")
     void should_include_rag_section_when_context_provided() {
         // given
         OwnerProfileResponse ownerProfile = OwnerProfileResponse.builder()
@@ -69,7 +70,8 @@ class PromptAssemblerTest {
         String prompt = promptAssembler.assemble(ownerProfile, ragContext);
 
         // then
-        assertThat(prompt).contains("参考资料");
+        assertThat(prompt).contains("知识库");
+        assertThat(prompt).contains("行为准则");
         assertThat(prompt).contains("Spring Boot 经验");
         assertThat(prompt).contains("5年 Spring Boot 开发经验");
     }

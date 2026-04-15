@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { KnowledgeData, CreateKnowledgeData } from '@/lib/admin-types'
 import { createKnowledge, deleteKnowledge } from '@/lib/admin-api'
 
@@ -11,12 +11,17 @@ interface Props {
 }
 
 const KNOWLEDGE_TYPES = ['TEXT', 'FAQ', 'STRUCTURED']
+const PAGE_SIZE = 10
 
 export default function KnowledgeTable({ entries, onRefresh }: Props) {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState<CreateKnowledgeData>({ type: 'TEXT', title: '', content: '' })
   const [loading, setLoading] = useState(false)
   const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [page, setPage] = useState(1)
+
+  const totalPages = Math.max(1, Math.ceil(entries.length / PAGE_SIZE))
+  const pageEntries = entries.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const handleCreate = async () => {
     if (!form.content.trim()) return
@@ -29,6 +34,7 @@ export default function KnowledgeTable({ entries, onRefresh }: Props) {
       })
       setForm({ type: 'TEXT', title: '', content: '' })
       setShowForm(false)
+      setPage(1)
       onRefresh()
     } catch (e) {
       alert(e instanceof Error ? e.message : '创建失败')
@@ -41,6 +47,8 @@ export default function KnowledgeTable({ entries, onRefresh }: Props) {
     if (!confirm('确认删除此知识条目？')) return
     try {
       await deleteKnowledge(id)
+      // 若当前页删完则回到上一页
+      if (pageEntries.length === 1 && page > 1) setPage(page - 1)
       onRefresh()
     } catch (e) {
       alert(e instanceof Error ? e.message : '删除失败')
@@ -49,50 +57,7 @@ export default function KnowledgeTable({ entries, onRefresh }: Props) {
 
   return (
     <div className="space-y-3">
-      {/* 知识条目列表 */}
-      {entries.length === 0 ? (
-        <p className="text-sm text-gray-400 text-center py-8">暂无知识条目</p>
-      ) : (
-        entries.map((entry) => (
-          <div
-            key={entry.id}
-            className="bg-white rounded-xl border border-gray-100 overflow-hidden"
-          >
-            <div
-              className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 transition-colors"
-              onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
-            >
-              <span className="text-xs px-2 py-0.5 bg-blue-50 text-blue-600 rounded-lg font-medium">
-                {entry.type}
-              </span>
-              <span className="flex-1 text-sm text-gray-700 font-medium truncate">
-                {entry.title || entry.content.slice(0, 50) + '...'}
-              </span>
-              <span className="text-xs text-gray-400">
-                {new Date(entry.createdAt).toLocaleDateString('zh-CN')}
-              </span>
-              {expandedId === entry.id ? (
-                <ChevronUp className="w-4 h-4 text-gray-400" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-gray-400" />
-              )}
-              <button
-                onClick={(e) => { e.stopPropagation(); handleDelete(entry.id) }}
-                className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg transition-colors"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-            {expandedId === entry.id && (
-              <div className="px-4 pb-4 border-t border-gray-50">
-                <p className="text-sm text-gray-600 whitespace-pre-wrap mt-3">{entry.content}</p>
-              </div>
-            )}
-          </div>
-        ))
-      )}
-
-      {/* 新增表单 */}
+      {/* 添加知识条目（置于列表上方） */}
       {showForm ? (
         <div className="bg-white rounded-xl border border-blue-200 p-4 space-y-3">
           <div className="flex gap-3">
@@ -148,6 +113,92 @@ export default function KnowledgeTable({ entries, onRefresh }: Props) {
           <Plus className="w-4 h-4" />
           添加知识条目
         </button>
+      )}
+
+      {/* 知识条目列表 */}
+      {entries.length === 0 ? (
+        <p className="text-sm text-gray-400 text-center py-8">暂无知识条目</p>
+      ) : (
+        <>
+          {pageEntries.map((entry) => (
+            <div
+              key={entry.id}
+              className="bg-white rounded-xl border border-gray-100 overflow-hidden"
+            >
+              <div
+                className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
+              >
+                <span className="text-xs px-2 py-0.5 bg-blue-50 text-blue-600 rounded-lg font-medium">
+                  {entry.type}
+                </span>
+                <span className="flex-1 text-sm text-gray-700 font-medium truncate">
+                  {entry.title || entry.content.slice(0, 50) + '...'}
+                </span>
+                <span className="text-xs text-gray-400">
+                  {new Date(entry.createdAt).toLocaleDateString('zh-CN')}
+                </span>
+                {expandedId === entry.id ? (
+                  <ChevronUp className="w-4 h-4 text-gray-400" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                )}
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleDelete(entry.id) }}
+                  className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+              {expandedId === entry.id && (
+                <div className="px-4 pb-4 border-t border-gray-50">
+                  <p className="text-sm text-gray-600 whitespace-pre-wrap mt-3">{entry.content}</p>
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* 分页控件 */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-2">
+              <span className="text-xs text-gray-400">
+                第 {page} / {totalPages} 页，共 {entries.length} 条
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage(page - 1)}
+                  disabled={page === 1}
+                  className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-30
+                             disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={[
+                      'w-7 h-7 rounded-lg text-xs transition-colors',
+                      p === page
+                        ? 'bg-blue-500 text-white'
+                        : 'text-gray-600 hover:bg-gray-100',
+                    ].join(' ')}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setPage(page + 1)}
+                  disabled={page === totalPages}
+                  className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-30
+                             disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

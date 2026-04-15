@@ -18,20 +18,16 @@ interface StreamingBubbleProps {
 
 export default function StreamingBubble({ text }: StreamingBubbleProps) {
   return (
-    <div className="flex justify-start mb-4">
-      <div className="max-w-[85%] sm:max-w-[75%]">
-        {/* AI 气泡：左对齐，白色背景 */}
-        <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
-          <div className="prose prose-sm max-w-none text-gray-800">
-            <ReactMarkdown>{text || ''}</ReactMarkdown>
-          </div>
-          {/* 光标闪烁动画 */}
-          <span
-            className="inline-block w-[2px] h-4 bg-gray-600 ml-0.5 align-middle animate-pulse"
-            aria-hidden="true"
-          />
-        </div>
+    <div className="mb-6">
+      {/* AI 回答：全宽展示，无气泡边框 */}
+      <div className="prose prose-sm max-w-none text-gray-800">
+        <ReactMarkdown>{text || ''}</ReactMarkdown>
       </div>
+      {/* 光标闪烁动画 */}
+      <span
+        className="inline-block w-[2px] h-4 bg-gray-600 ml-0.5 align-middle animate-pulse"
+        aria-hidden="true"
+      />
     </div>
   )
 }

@@ -42,10 +42,7 @@ export default function KnowledgePage() {
           <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
         </div>
       ) : (
-        <>
-          <div className="text-xs text-gray-400">共 {entries.length} 条</div>
-          <KnowledgeTable entries={entries} onRefresh={loadData} />
-        </>
+        <KnowledgeTable entries={entries} onRefresh={loadData} />
       )}
     </div>
   )

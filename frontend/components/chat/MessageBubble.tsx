@@ -46,19 +46,17 @@ export default function MessageBubble({
 
   // assistant 消息
   return (
-    <div className="flex flex-col items-start mb-4">
-      {/* AI 气泡：左对齐，白色背景，Markdown 渲染 */}
-      <div className="max-w-[85%] sm:max-w-[75%]">
-        <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
-          <div className="prose prose-sm max-w-none text-gray-800">
-            <ReactMarkdown>{message.content}</ReactMarkdown>
-          </div>
+    <div className="flex flex-col mb-6">
+      {/* AI 回答：全宽展示，无气泡边框，参考主流 AI 产品样式 */}
+      <div className="w-full">
+        <div className="prose prose-sm max-w-none text-gray-800">
+          <ReactMarkdown>{message.content}</ReactMarkdown>
         </div>
       </div>
 
       {/* 动态提示词卡片（done 事件后展示） */}
       {message.suggestions && message.suggestions.length > 0 && onSuggestionSelect && (
-        <div className="mt-2 w-full max-w-[85%] sm:max-w-[75%]">
+        <div className="mt-3 w-full">
           <SuggestionCards
             suggestions={message.suggestions}
             onSelect={onSuggestionSelect}

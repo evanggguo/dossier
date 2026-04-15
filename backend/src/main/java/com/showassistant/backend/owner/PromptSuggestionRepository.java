@@ -21,4 +21,6 @@ public interface PromptSuggestionRepository extends JpaRepository<PromptSuggesti
      * 管理端 — 查询指定 Owner 的所有提示词（含禁用），按 sort_order 升序排列
      */
     List<PromptSuggestion> findByOwnerIdOrderBySortOrderAsc(Long ownerId);
+
+    void deleteByOwnerId(Long ownerId);
 }

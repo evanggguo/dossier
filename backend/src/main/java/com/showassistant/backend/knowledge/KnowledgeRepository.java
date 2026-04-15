@@ -39,4 +39,6 @@ public interface KnowledgeRepository extends JpaRepository<KnowledgeEntry, Long>
      * 查询指定 Owner 的所有知识条目
      */
     List<KnowledgeEntry> findByOwnerIdOrderByCreatedAtDesc(Long ownerId);
+
+    void deleteByOwnerId(Long ownerId);
 }

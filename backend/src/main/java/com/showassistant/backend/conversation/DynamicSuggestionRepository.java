@@ -15,4 +15,6 @@ public interface DynamicSuggestionRepository extends JpaRepository<DynamicSugges
      * TDD 4.4 — 查询指定消息的动态提示词，按 sort_order 升序
      */
     List<DynamicSuggestion> findByMessageIdOrderBySortOrderAsc(Long messageId);
+
+    void deleteByMessage_Conversation_OwnerId(Long ownerId);
 }

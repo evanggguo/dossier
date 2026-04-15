@@ -2,8 +2,14 @@ package com.showassistant.backend.superadmin;
 
 import com.showassistant.backend.common.exception.BusinessException;
 import com.showassistant.backend.common.exception.ResourceNotFoundException;
+import com.showassistant.backend.conversation.ConversationRepository;
+import com.showassistant.backend.conversation.DynamicSuggestionRepository;
+import com.showassistant.backend.conversation.MessageRepository;
+import com.showassistant.backend.document.DocumentRepository;
+import com.showassistant.backend.knowledge.KnowledgeRepository;
 import com.showassistant.backend.owner.Owner;
 import com.showassistant.backend.owner.OwnerRepository;
+import com.showassistant.backend.owner.PromptSuggestionRepository;
 import com.showassistant.backend.superadmin.dto.CreateOwnerRequest;
 import com.showassistant.backend.superadmin.dto.OwnerSummaryResponse;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +33,12 @@ public class SuperAdminService {
 
     private final OwnerRepository ownerRepository;
     private final PasswordEncoder passwordEncoder;
+    private final DynamicSuggestionRepository dynamicSuggestionRepository;
+    private final MessageRepository messageRepository;
+    private final ConversationRepository conversationRepository;
+    private final PromptSuggestionRepository promptSuggestionRepository;
+    private final KnowledgeRepository knowledgeRepository;
+    private final DocumentRepository documentRepository;
 
     @Transactional(readOnly = true)
     public List<OwnerSummaryResponse> listOwners() {
@@ -57,6 +69,13 @@ public class SuperAdminService {
         if (!ownerRepository.existsById(id)) {
             throw new ResourceNotFoundException("Owner", id);
         }
+        // Delete in FK dependency order
+        dynamicSuggestionRepository.deleteByMessage_Conversation_OwnerId(id);
+        messageRepository.deleteByConversation_OwnerId(id);
+        conversationRepository.deleteByOwnerId(id);
+        promptSuggestionRepository.deleteByOwnerId(id);
+        knowledgeRepository.deleteByOwnerId(id);
+        documentRepository.deleteByOwnerId(id);
         ownerRepository.deleteById(id);
         log.info("SuperAdmin deleted owner id={}", id);
     }

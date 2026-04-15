@@ -20,4 +20,6 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
      * 查询待处理的文档（Phase 3 后台处理用）
      */
     List<Document> findByStatus(DocumentStatus status);
+
+    void deleteByOwnerId(Long ownerId);
 }

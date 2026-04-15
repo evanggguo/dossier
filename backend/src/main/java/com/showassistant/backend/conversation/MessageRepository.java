@@ -33,4 +33,6 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
      * 查询会话的所有消息，按时间正序
      */
     List<Message> findByConversationIdOrderByCreatedAtAsc(Long conversationId);
+
+    void deleteByConversation_OwnerId(Long ownerId);
 }

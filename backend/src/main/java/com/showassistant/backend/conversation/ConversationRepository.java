@@ -8,4 +8,6 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface ConversationRepository extends JpaRepository<Conversation, Long> {
+
+    void deleteByOwnerId(Long ownerId);
 }

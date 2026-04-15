@@ -103,7 +103,7 @@ show-assistant/
      │
      ▼
 [Frontend: useChatStream hook]
-  - 实时渲染 token 到消息气泡
+  - 实时渲染 token 到全宽 AI 回答区域
   - 接收 done 事件，展示动态提示词卡片
 ```
 
@@ -715,7 +715,7 @@ app/(client)/page.tsx                  # 客户端主页
         ├── <MessageList>              # 消息列表
         │     ├── <MessageBubble>      # 单条消息（支持 Markdown）
         │     │     └── <SuggestionCards>  # 该消息下方的动态提示词卡片
-        │     └── <StreamingBubble>   # 正在流式输出的气泡（实时更新）
+        │     └── <StreamingBubble>   # 正在流式输出的全宽回答区域（实时更新）
         ├── <InitialSuggestions>       # 首屏未对话时展示的初始提示词
         └── <ChatInput>                # 底部输入框 + 发送按钮
 ```

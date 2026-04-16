@@ -87,9 +87,12 @@ public class PromptAssembler {
         // ── 语言强制指令（置于末尾，优先级最高）──────────────────────
         sb.append("\n## FINAL LANGUAGE DIRECTIVE\n");
         if ("zh".equals(detectedLang)) {
-            sb.append("⚠️ The visitor's message is in Chinese. You MUST respond entirely in Chinese (中文). Do NOT use English.\n");
+            sb.append("⚠️ CRITICAL: The visitor wrote in Chinese. Your entire response MUST be in Chinese (中文). ");
+            sb.append("Use the knowledge base content above as your source, and present it in Chinese.\n");
         } else {
-            sb.append("⚠️ The visitor's message is in English. You MUST respond entirely in English. Do NOT use Chinese.\n");
+            sb.append("⚠️ CRITICAL: The visitor wrote in English. Your entire response MUST be in English. ");
+            sb.append("Use the knowledge base content above as your source, and present it in English. ");
+            sb.append("The knowledge base may be in Chinese — that is fine, just present the information in English.\n");
         }
 
         String prompt = sb.toString();

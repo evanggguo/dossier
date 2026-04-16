@@ -32,8 +32,9 @@ public class SuggestFollowupsTool {
      * @return 空字符串（工具调用结果不显示给用户）
      */
     @Tool(name = "suggest_followups",
-          description = "在回答完成后调用此工具，提供 2-3 个相关的跟进问题供用户选择。" +
-                        "suggestions 为 JSON 数组，每条不超过 20 字。")
+          description = "Call this tool after completing your answer to provide 2-3 relevant follow-up questions for the user. " +
+                        "IMPORTANT: Generate the questions in the SAME language the user used in their message. " +
+                        "suggestions is a JSON array, each question under 30 characters.")
     public String suggestFollowups(List<String> suggestions) {
         if (suggestions != null && !suggestions.isEmpty()) {
             capturedSuggestions.addAll(suggestions);

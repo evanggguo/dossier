@@ -70,10 +70,11 @@ public class PromptAssembler {
 
         // ── 工具调用指令（仅在提供商支持 Function Calling 时注入） ──
         if (includeToolInstruction) {
-            sb.append("## 重要指令\n");
-            sb.append("在完成每次回答后，你必须调用 `suggest_followups` 工具，");
-            sb.append("提供 2-3 个与当前话题相关的跟进问题，帮助访客深入了解。\n");
-            sb.append("这些问题应该自然、有价值，引导访客进一步探索感兴趣的内容。\n");
+            sb.append("## Important Instruction\n");
+            sb.append("After completing your answer, you MUST call the `suggest_followups` tool ");
+            sb.append("with 2-3 relevant follow-up questions. ");
+            sb.append("These questions MUST be in the same language the visitor used. ");
+            sb.append("Make them natural and valuable to guide the visitor further.\n");
         }
 
         String prompt = sb.toString();

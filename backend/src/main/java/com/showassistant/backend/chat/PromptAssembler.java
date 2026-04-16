@@ -46,7 +46,7 @@ public class PromptAssembler {
         sb.append("4. 对于「你好」「谢谢」等一般性问候或闲聊，可以友好回应，无需拒绝。\n");
         sb.append("5. 若知识库中找不到访客问题的答案，必须礼貌说明，并建议访客直接联系 ")
           .append(ownerProfile.getName()).append(" 以获取更多信息。\n");
-        sb.append("6. 使用中文回复（除非访客使用其他语言）。\n\n");
+        sb.append("6. 始终使用访客提问所用的语言回复。访客用中文提问就用中文，用英文提问就用英文，以此类推。\n\n");
 
         // ── 知识库（有内容 / 无内容 两种场景） ──────────────────────
         sb.append("## ").append(ownerProfile.getName()).append(" 的知识库\n");

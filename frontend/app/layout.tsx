@@ -8,7 +8,7 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'Show Assistant',
-  description: '智能对话助手，了解 Owner 的项目和经历',
+  description: 'AI-powered personal assistant — learn about the owner\'s projects and experience.',
 }
 
 export const viewport: Viewport = {
@@ -22,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="zh-CN" className="h-full antialiased">
+    <html lang="en" className="h-full antialiased">
       <body className="h-full">{children}</body>
     </html>
   )

@@ -16,7 +16,7 @@ async function apiFetch<T>(path: string): Promise<T> {
     headers: { Accept: 'application/json' },
   })
   if (!res.ok) {
-    throw new Error(`API ${path} 返回 ${res.status}: ${res.statusText}`)
+    throw new Error(`API ${path} returned ${res.status}: ${res.statusText}`)
   }
   const body = await res.json()
   // 后端统一包装格式 { success, data }

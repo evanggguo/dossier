@@ -6,9 +6,9 @@ import { User, BookOpen, FileText, LogOut } from 'lucide-react'
 import { useAdminAuth } from '@/hooks/useAdminAuth'
 
 const navItems = [
-  { href: '/admin/profile', label: 'Owner 信息', icon: User },
-  { href: '/admin/knowledge', label: '知识库', icon: BookOpen },
-  { href: '/admin/documents', label: '文档管理', icon: FileText },
+  { href: '/admin/profile', label: 'Owner Profile', icon: User },
+  { href: '/admin/knowledge', label: 'Knowledge Base', icon: BookOpen },
+  { href: '/admin/documents', label: 'Documents', icon: FileText },
 ]
 
 export default function Sidebar() {
@@ -24,7 +24,7 @@ export default function Sidebar() {
   return (
     <aside className="w-56 bg-white border-r border-gray-100 flex flex-col shrink-0">
       <div className="px-5 py-4 border-b border-gray-100">
-        <span className="text-sm font-semibold text-gray-700">管理后台</span>
+        <span className="text-sm font-semibold text-gray-700">Admin Console</span>
       </div>
       <nav className="flex-1 py-4 px-3 space-y-1">
         {navItems.map(({ href, label, icon: Icon }) => (
@@ -50,7 +50,7 @@ export default function Sidebar() {
                      text-gray-500 hover:bg-gray-50 w-full transition-colors"
         >
           <LogOut className="w-4 h-4 shrink-0" />
-          退出登录
+          Sign Out
         </button>
       </div>
     </aside>

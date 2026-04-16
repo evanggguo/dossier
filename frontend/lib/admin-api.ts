@@ -41,7 +41,7 @@ async function adminFetch<T>(path: string, options: RequestInit = {}): Promise<T
       localStorage.removeItem('admin_token')
       window.location.href = '/admin/login'
     }
-    throw new Error('未授权，请重新登录')
+    throw new Error('Unauthorized. Please log in again.')
   }
 
   if (res.status === 204) {
@@ -50,7 +50,7 @@ async function adminFetch<T>(path: string, options: RequestInit = {}): Promise<T
 
   const body = await res.json()
   if (!body.success) {
-    throw new Error(body.message || '请求失败')
+    throw new Error(body.message || 'Request failed')
   }
   return body.data as T
 }
@@ -67,7 +67,7 @@ export async function adminLogin(
     body: JSON.stringify({ username, password }),
   })
   const body = await res.json()
-  if (!body.success) throw new Error(body.message || '登录失败')
+  if (!body.success) throw new Error(body.message || 'Login failed')
   return body.data
 }
 
@@ -153,7 +153,7 @@ async function superAdminFetch<T>(path: string, options: RequestInit = {}): Prom
   if (res.status === 204) return undefined as T
 
   const body = await res.json()
-  if (!body.success) throw new Error(body.message || '请求失败')
+  if (!body.success) throw new Error(body.message || 'Request failed')
   return body.data as T
 }
 
@@ -190,11 +190,11 @@ export async function uploadDocument(file: File): Promise<DocumentData> {
       localStorage.removeItem('admin_token')
       window.location.href = '/admin/login'
     }
-    throw new Error('未授权，请重新登录')
+    throw new Error('Unauthorized. Please log in again.')
   }
 
   const body = await res.json()
-  if (!body.success) throw new Error(body.message || '上传失败')
+  if (!body.success) throw new Error(body.message || 'Upload failed')
   return body.data
 }
 

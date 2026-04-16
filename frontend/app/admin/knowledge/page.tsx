@@ -16,7 +16,7 @@ export default function KnowledgePage() {
       const data = await fetchKnowledge()
       setEntries(data)
     } catch (e) {
-      setError(e instanceof Error ? e.message : '加载失败')
+      setError(e instanceof Error ? e.message : 'Failed to load')
     } finally {
       setLoading(false)
     }
@@ -27,9 +27,9 @@ export default function KnowledgePage() {
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <h1 className="text-lg font-semibold text-gray-800">知识库</h1>
+        <h1 className="text-lg font-semibold text-gray-800">Knowledge Base</h1>
         <p className="text-sm text-gray-500 mt-1">
-          手动添加文本知识，AI 对话时会检索最相关的内容作为上下文
+          Manually add text entries. The most relevant content will be retrieved as context during AI conversations.
         </p>
       </div>
 

@@ -23,16 +23,16 @@ import ChatInput from './ChatInput'
 
 /** 后端不可用时的降级初始提示词 */
 const FALLBACK_SUGGESTIONS = [
-  '你擅长什么领域？',
-  '请介绍一下你自己',
-  '你可以帮我做什么？',
-  '有什么最近的项目分享吗？',
+  'What are your areas of expertise?',
+  'Tell me about yourself',
+  'What can you help me with?',
+  'Any recent projects you\'d like to share?',
 ]
 
 /** 后端不可用时的降级 Owner 简介 */
 const FALLBACK_PROFILE: OwnerProfileType = {
   name: 'Show Assistant',
-  tagline: '欢迎与我对话',
+  tagline: 'Welcome',
 }
 
 interface ChatPageProps {
@@ -122,10 +122,10 @@ export default function ChatPage({ ownerUsername }: ChatPageProps) {
             {/* 欢迎语 */}
             <div className="text-center">
               <h2 className="text-xl font-medium text-gray-700">
-                有什么我可以帮助你的吗？
+                How can I help you?
               </h2>
               <p className="text-sm text-gray-400 mt-1">
-                点击下方卡片或直接输入开始对话
+                Click a card below or type a message to start
               </p>
             </div>
 
@@ -158,7 +158,7 @@ export default function ChatPage({ ownerUsername }: ChatPageProps) {
             <button
               onClick={clearError}
               className="flex-shrink-0 hover:text-red-900 transition-colors"
-              aria-label="关闭错误提示"
+              aria-label="Dismiss error"
             >
               <X className="w-4 h-4" />
             </button>

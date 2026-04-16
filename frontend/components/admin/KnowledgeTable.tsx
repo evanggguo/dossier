@@ -37,21 +37,21 @@ export default function KnowledgeTable({ entries, onRefresh }: Props) {
       setPage(1)
       onRefresh()
     } catch (e) {
-      alert(e instanceof Error ? e.message : '创建失败')
+      alert(e instanceof Error ? e.message : 'Failed to create')
     } finally {
       setLoading(false)
     }
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('确认删除此知识条目？')) return
+    if (!confirm('Delete this knowledge entry?')) return
     try {
       await deleteKnowledge(id)
       // 若当前页删完则回到上一页
       if (pageEntries.length === 1 && page > 1) setPage(page - 1)
       onRefresh()
     } catch (e) {
-      alert(e instanceof Error ? e.message : '删除失败')
+      alert(e instanceof Error ? e.message : 'Failed to delete')
     }
   }
 
@@ -74,7 +74,7 @@ export default function KnowledgeTable({ entries, onRefresh }: Props) {
             <input
               value={form.title || ''}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="标题（可选）"
+              placeholder="Title (optional)"
               className="flex-1 border border-gray-300 rounded-xl px-3 py-2 text-sm
                          focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
             />
@@ -82,7 +82,7 @@ export default function KnowledgeTable({ entries, onRefresh }: Props) {
           <textarea
             value={form.content}
             onChange={(e) => setForm({ ...form, content: e.target.value })}
-            placeholder="知识内容..."
+            placeholder="Knowledge content..."
             rows={4}
             className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm resize-none
                        focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
@@ -92,7 +92,7 @@ export default function KnowledgeTable({ entries, onRefresh }: Props) {
               onClick={() => setShowForm(false)}
               className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-xl transition-colors"
             >
-              取消
+              Cancel
             </button>
             <button
               onClick={handleCreate}
@@ -100,7 +100,7 @@ export default function KnowledgeTable({ entries, onRefresh }: Props) {
               className="px-4 py-2 text-sm bg-blue-500 hover:bg-blue-600 text-white
                          rounded-xl transition-colors disabled:opacity-60"
             >
-              {loading ? '保存中...' : '保存'}
+              {loading ? 'Saving...' : 'Save'}
             </button>
           </div>
         </div>
@@ -111,13 +111,13 @@ export default function KnowledgeTable({ entries, onRefresh }: Props) {
                      rounded-xl border border-dashed border-blue-200 w-full transition-colors"
         >
           <Plus className="w-4 h-4" />
-          添加知识条目
+          Add Knowledge Entry
         </button>
       )}
 
       {/* 知识条目列表 */}
       {entries.length === 0 ? (
-        <p className="text-sm text-gray-400 text-center py-8">暂无知识条目</p>
+        <p className="text-sm text-gray-400 text-center py-8">No knowledge entries yet</p>
       ) : (
         <>
           {pageEntries.map((entry) => (
@@ -136,7 +136,7 @@ export default function KnowledgeTable({ entries, onRefresh }: Props) {
                   {entry.title || entry.content.slice(0, 50) + '...'}
                 </span>
                 <span className="text-xs text-gray-400">
-                  {new Date(entry.createdAt).toLocaleDateString('zh-CN')}
+                  {new Date(entry.createdAt).toLocaleDateString('en-US')}
                 </span>
                 {expandedId === entry.id ? (
                   <ChevronUp className="w-4 h-4 text-gray-400" />
@@ -162,7 +162,7 @@ export default function KnowledgeTable({ entries, onRefresh }: Props) {
           {totalPages > 1 && (
             <div className="flex items-center justify-between pt-2">
               <span className="text-xs text-gray-400">
-                第 {page} / {totalPages} 页，共 {entries.length} 条
+                Page {page} / {totalPages} · {entries.length} entries
               </span>
               <div className="flex items-center gap-1">
                 <button

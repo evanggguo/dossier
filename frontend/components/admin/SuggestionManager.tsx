@@ -34,7 +34,7 @@ export default function SuggestionManager({ suggestions, onRefresh }: Props) {
       setAdding(false)
       onRefresh()
     } catch (e) {
-      alert(e instanceof Error ? e.message : '添加失败')
+      alert(e instanceof Error ? e.message : 'Failed to add')
     } finally {
       setLoading(false)
     }
@@ -48,7 +48,7 @@ export default function SuggestionManager({ suggestions, onRefresh }: Props) {
       setEditingId(null)
       onRefresh()
     } catch (e) {
-      alert(e instanceof Error ? e.message : '更新失败')
+      alert(e instanceof Error ? e.message : 'Failed to update')
     } finally {
       setLoading(false)
     }
@@ -59,17 +59,17 @@ export default function SuggestionManager({ suggestions, onRefresh }: Props) {
       await updateSuggestion(s.id, { enabled: !s.enabled })
       onRefresh()
     } catch (e) {
-      alert(e instanceof Error ? e.message : '更新失败')
+      alert(e instanceof Error ? e.message : 'Failed to update')
     }
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('确认删除此提示词？')) return
+    if (!confirm('Delete this suggestion?')) return
     try {
       await deleteSuggestion(id)
       onRefresh()
     } catch (e) {
-      alert(e instanceof Error ? e.message : '删除失败')
+      alert(e instanceof Error ? e.message : 'Failed to delete')
     }
   }
 
@@ -123,7 +123,7 @@ export default function SuggestionManager({ suggestions, onRefresh }: Props) {
                     : 'border-gray-200 text-gray-500 hover:bg-gray-50',
                 ].join(' ')}
               >
-                {s.enabled ? '启用' : '禁用'}
+                {s.enabled ? 'Enabled' : 'Disabled'}
               </button>
               <button
                 onClick={() => {
@@ -150,7 +150,7 @@ export default function SuggestionManager({ suggestions, onRefresh }: Props) {
           <input
             value={newText}
             onChange={(e) => setNewText(e.target.value)}
-            placeholder="输入新提示词..."
+            placeholder="Enter new suggestion..."
             className="flex-1 text-sm focus:outline-none"
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
             autoFocus
@@ -176,7 +176,7 @@ export default function SuggestionManager({ suggestions, onRefresh }: Props) {
                      rounded-xl border border-dashed border-blue-200 w-full transition-colors"
         >
           <Plus className="w-4 h-4" />
-          添加提示词
+          Add Suggestion
         </button>
       )}
     </div>

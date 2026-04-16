@@ -69,7 +69,7 @@ function Avatar({ name, avatarUrl, size }: AvatarProps) {
     return (
       <Image
         src={avatarUrl}
-        alt={`${name} 的头像`}
+        alt={`${name}'s avatar`}
         width={size}
         height={size}
         className="rounded-full object-cover"

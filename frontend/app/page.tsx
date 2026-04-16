@@ -9,7 +9,7 @@ export default function RootPage() {
       <div className="text-center space-y-2">
         <h1 className="text-xl font-semibold text-gray-700">Show Assistant</h1>
         <p className="text-sm text-gray-400">
-          请访问 <code className="bg-gray-100 px-1 rounded">/{'{ownerUsername}'}/chat</code> 开始对话
+          Visit <code className="bg-gray-100 px-1 rounded">/{'{ownerUsername}'}/chat</code> to start a conversation
         </p>
       </div>
     </div>

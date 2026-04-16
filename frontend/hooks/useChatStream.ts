@@ -130,11 +130,11 @@ export function useChatStream(
         )
 
         if (!res.ok) {
-          throw new Error(`请求失败：${res.status} ${res.statusText}`)
+          throw new Error(`Request failed: ${res.status} ${res.statusText}`)
         }
 
         if (!res.body) {
-          throw new Error('响应体为空，SSE 不可用')
+          throw new Error('Response body is empty, SSE unavailable')
         }
 
         const reader = res.body.getReader()
@@ -179,12 +179,12 @@ export function useChatStream(
               setIsStreaming(false)
             } else if (event === 'error') {
               const errData = data as SseErrorData
-              throw new Error(errData.message || '服务器返回错误')
+              throw new Error(errData.message || 'Server returned an error')
             }
           }
         }
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : '请求失败，请稍后重试'
+        const message = err instanceof Error ? err.message : 'Request failed, please try again later'
         setError(message)
         setStreamingText('')
         streamingTextRef.current = ''

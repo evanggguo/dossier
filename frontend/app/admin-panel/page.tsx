@@ -36,7 +36,7 @@ export default function AdminPanelPage() {
       const data = await fetchOwners()
       setOwners(data)
     } catch (e) {
-      setError(e instanceof Error ? e.message : '加载失败')
+      setError(e instanceof Error ? e.message : 'Failed to load')
     } finally {
       setLoading(false)
     }
@@ -56,9 +56,9 @@ export default function AdminPanelPage() {
   }
 
   const validateUsername = (v: string) => {
-    if (!v) return '用户名不能为空'
-    if (!/^[a-zA-Z0-9]+$/.test(v)) return '只能包含英文字母和数字'
-    if (owners.some(o => o.username === v)) return '用户名已存在'
+    if (!v) return 'Username is required'
+    if (!/^[a-zA-Z0-9]+$/.test(v)) return 'Only letters and numbers are allowed'
+    if (owners.some(o => o.username === v)) return 'Username already exists'
     return ''
   }
 
@@ -74,19 +74,19 @@ export default function AdminPanelPage() {
       setUsernameError('')
       await loadOwners()
     } catch (e) {
-      setUsernameError(e instanceof Error ? e.message : '创建失败')
+      setUsernameError(e instanceof Error ? e.message : 'Failed to create')
     } finally {
       setCreating(false)
     }
   }
 
   const handleDelete = async (id: number, username: string) => {
-    if (!confirm(`确认删除 Owner「${username}」？此操作不可恢复。`)) return
+    if (!confirm(`Are you sure you want to delete owner "${username}"? This action cannot be undone.`)) return
     try {
       await deleteOwner(id)
       await loadOwners()
     } catch (e) {
-      setError(e instanceof Error ? e.message : '删除失败')
+      setError(e instanceof Error ? e.message : 'Failed to delete')
     }
   }
 
@@ -99,8 +99,8 @@ export default function AdminPanelPage() {
             <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center">
               <ShieldAlert className="w-6 h-6 text-red-500" />
             </div>
-            <h1 className="text-lg font-semibold text-gray-800">超级管理</h1>
-            <p className="text-xs text-gray-400 text-center">此页面仅限系统管理员使用</p>
+            <h1 className="text-lg font-semibold text-gray-800">Super Admin</h1>
+            <p className="text-xs text-gray-400 text-center">This page is restricted to system administrators</p>
           </div>
 
           <div className="space-y-3">
@@ -110,7 +110,7 @@ export default function AdminPanelPage() {
                 value={pwInput}
                 onChange={e => { setPwInput(e.target.value); setPwError(false) }}
                 onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                placeholder="请输入管理密码"
+                placeholder="Enter admin password"
                 className={[
                   'w-full border rounded-xl px-3 py-2.5 text-sm pr-10',
                   'focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400',
@@ -125,13 +125,13 @@ export default function AdminPanelPage() {
                 {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-            {pwError && <p className="text-xs text-red-500">密码错误</p>}
+            {pwError && <p className="text-xs text-red-500">Incorrect password</p>}
             <button
               onClick={handleLogin}
               className="w-full py-2.5 bg-red-500 hover:bg-red-600 text-white text-sm
                          rounded-xl transition-colors font-medium"
             >
-              进入管理
+              Enter Admin
             </button>
           </div>
         </div>
@@ -149,8 +149,8 @@ export default function AdminPanelPage() {
             <ShieldAlert className="w-5 h-5 text-red-500" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-gray-800">超级管理 · Owner 账号</h1>
-            <p className="text-xs text-gray-400">Owner 账号可登录 /admin 管理台，初始密码均为 888888</p>
+            <h1 className="text-lg font-semibold text-gray-800">Super Admin · Owner Accounts</h1>
+            <p className="text-xs text-gray-400">Owner accounts can log in to /admin console. Default password: 888888</p>
           </div>
         </div>
 
@@ -161,13 +161,13 @@ export default function AdminPanelPage() {
         {/* 添加表单 */}
         {showForm ? (
           <div className="bg-white rounded-xl border border-blue-200 p-4 space-y-3">
-            <p className="text-sm font-medium text-gray-700">添加 Owner 账号</p>
+            <p className="text-sm font-medium text-gray-700">Add Owner Account</p>
             <div>
               <input
                 value={newUsername}
                 onChange={e => { setNewUsername(e.target.value); setUsernameError('') }}
                 onKeyDown={e => e.key === 'Enter' && handleCreate()}
-                placeholder="用户名（英文或数字）"
+                placeholder="Username (letters and numbers only)"
                 className={[
                   'w-full border rounded-xl px-3 py-2 text-sm',
                   'focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400',
@@ -175,14 +175,14 @@ export default function AdminPanelPage() {
                 ].join(' ')}
               />
               {usernameError && <p className="text-xs text-red-500 mt-1">{usernameError}</p>}
-              <p className="text-xs text-gray-400 mt-1">初始密码：888888，登录后可在管理台修改</p>
+              <p className="text-xs text-gray-400 mt-1">Default password: 888888. Can be changed in the admin console after login.</p>
             </div>
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => { setShowForm(false); setNewUsername(''); setUsernameError('') }}
                 className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-xl transition-colors"
               >
-                取消
+                Cancel
               </button>
               <button
                 onClick={handleCreate}
@@ -191,7 +191,7 @@ export default function AdminPanelPage() {
                            text-white rounded-xl transition-colors disabled:opacity-60"
               >
                 {creating && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                创建
+                Create
               </button>
             </div>
           </div>
@@ -202,7 +202,7 @@ export default function AdminPanelPage() {
                        rounded-xl border border-dashed border-blue-200 w-full transition-colors"
           >
             <Plus className="w-4 h-4" />
-            添加 Owner 账号
+            Add Owner Account
           </button>
         )}
 
@@ -212,7 +212,7 @@ export default function AdminPanelPage() {
             <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
           </div>
         ) : owners.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-10">暂无 Owner 账号</p>
+          <p className="text-sm text-gray-400 text-center py-10">No owner accounts yet</p>
         ) : (
           <div className="space-y-2">
             {owners.map(owner => (
@@ -231,7 +231,7 @@ export default function AdminPanelPage() {
                   )}
                 </div>
                 <span className="text-xs text-gray-400 flex-shrink-0">
-                  {new Date(owner.createdAt).toLocaleDateString('zh-CN')}
+                  {new Date(owner.createdAt).toLocaleDateString('en-US')}
                 </span>
                 <button
                   onClick={() => handleDelete(owner.id, owner.username)}

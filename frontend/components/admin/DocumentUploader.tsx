@@ -11,10 +11,10 @@ interface Props {
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  PENDING: { label: '待处理', color: 'text-yellow-600 bg-yellow-50' },
-  PROCESSING: { label: '处理中', color: 'text-blue-600 bg-blue-50' },
-  COMPLETED: { label: '已完成', color: 'text-green-600 bg-green-50' },
-  FAILED: { label: '失败', color: 'text-red-600 bg-red-50' },
+  PENDING: { label: 'Pending', color: 'text-yellow-600 bg-yellow-50' },
+  PROCESSING: { label: 'Processing', color: 'text-blue-600 bg-blue-50' },
+  COMPLETED: { label: 'Completed', color: 'text-green-600 bg-green-50' },
+  FAILED: { label: 'Failed', color: 'text-red-600 bg-red-50' },
 }
 
 function formatFileSize(bytes: number): string {
@@ -37,7 +37,7 @@ export default function DocumentUploader({ documents, onRefresh }: Props) {
       }
       onRefresh()
     } catch (e) {
-      alert(e instanceof Error ? e.message : '上传失败')
+      alert(e instanceof Error ? e.message : 'Upload failed')
     } finally {
       setUploading(false)
     }
@@ -48,17 +48,17 @@ export default function DocumentUploader({ documents, onRefresh }: Props) {
       await processDocument(id)
       onRefresh()
     } catch (e) {
-      alert(e instanceof Error ? e.message : '触发解析失败')
+      alert(e instanceof Error ? e.message : 'Failed to trigger processing')
     }
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('确认删除此文档？相关知识条目不会被自动删除。')) return
+    if (!confirm('Delete this document? Related knowledge entries will not be removed automatically.')) return
     try {
       await deleteDocument(id)
       onRefresh()
     } catch (e) {
-      alert(e instanceof Error ? e.message : '删除失败')
+      alert(e instanceof Error ? e.message : 'Failed to delete')
     }
   }
 
@@ -91,18 +91,18 @@ export default function DocumentUploader({ documents, onRefresh }: Props) {
         />
         <Upload className="w-8 h-8 text-gray-400 mx-auto mb-3" />
         {uploading ? (
-          <p className="text-sm text-blue-600">上传中...</p>
+          <p className="text-sm text-blue-600">Uploading...</p>
         ) : (
           <>
-            <p className="text-sm text-gray-600 font-medium">点击或拖拽文件到此处上传</p>
-            <p className="text-xs text-gray-400 mt-1">支持 PDF、TXT、DOCX、PPT/PPTX，多文件同时上传</p>
+            <p className="text-sm text-gray-600 font-medium">Click or drag files here to upload</p>
+            <p className="text-xs text-gray-400 mt-1">Supports PDF, TXT, DOCX, PPT/PPTX. Multiple files allowed.</p>
           </>
         )}
       </div>
 
       {/* 文档列表 */}
       {documents.length === 0 ? (
-        <p className="text-sm text-gray-400 text-center py-4">暂无文档</p>
+        <p className="text-sm text-gray-400 text-center py-4">No documents yet</p>
       ) : (
         <div className="space-y-2">
           {documents.map((doc) => {
@@ -116,7 +116,7 @@ export default function DocumentUploader({ documents, onRefresh }: Props) {
                   <p className="text-sm text-gray-700 font-medium truncate">{doc.filename}</p>
                   <p className="text-xs text-gray-400 mt-0.5">
                     {doc.fileType.toUpperCase()} · {formatFileSize(doc.fileSize)} ·{' '}
-                    {new Date(doc.createdAt).toLocaleDateString('zh-CN')}
+                    {new Date(doc.createdAt).toLocaleDateString('en-US')}
                   </p>
                 </div>
                 <span className={`text-xs px-2 py-0.5 rounded-lg font-medium ${status.color}`}>
@@ -125,7 +125,7 @@ export default function DocumentUploader({ documents, onRefresh }: Props) {
                 {(doc.status === 'PENDING' || doc.status === 'FAILED') && (
                   <button
                     onClick={() => handleProcess(doc.id)}
-                    title="触发解析"
+                    title="Trigger processing"
                     className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
                   >
                     {doc.status === 'FAILED' ? (

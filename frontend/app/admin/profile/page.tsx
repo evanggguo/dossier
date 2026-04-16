@@ -39,7 +39,7 @@ export default function ProfilePage() {
       setProfile(p)
       setSuggestions(s)
     } catch (e) {
-      setError(e instanceof Error ? e.message : '加载失败')
+      setError(e instanceof Error ? e.message : 'Failed to load')
     } finally {
       setLoading(false)
     }
@@ -62,7 +62,7 @@ export default function ProfilePage() {
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } catch (e) {
-      setError(e instanceof Error ? e.message : '保存失败')
+      setError(e instanceof Error ? e.message : 'Failed to save')
     } finally {
       setSaving(false)
     }
@@ -70,8 +70,8 @@ export default function ProfilePage() {
 
   // ── 修改用户名 ────────────────────────────────────────────────────
   const handleChangeUsername = async () => {
-    if (!newUsername.trim()) { setUsernameError('用户名不能为空'); return }
-    if (!/^[a-zA-Z0-9]+$/.test(newUsername)) { setUsernameError('只能包含英文字母和数字'); return }
+    if (!newUsername.trim()) { setUsernameError('Username is required'); return }
+    if (!/^[a-zA-Z0-9]+$/.test(newUsername)) { setUsernameError('Only letters and numbers are allowed'); return }
     setUsernameSaving(true)
     setUsernameError('')
     try {
@@ -80,7 +80,7 @@ export default function ProfilePage() {
       setNewUsername('')
       setTimeout(() => setUsernameSaved(false), 2000)
     } catch (e) {
-      setUsernameError(e instanceof Error ? e.message : '修改失败')
+      setUsernameError(e instanceof Error ? e.message : 'Failed to update')
     } finally {
       setUsernameSaving(false)
     }
@@ -88,9 +88,9 @@ export default function ProfilePage() {
 
   // ── 修改密码 ──────────────────────────────────────────────────────
   const handleChangePassword = async () => {
-    if (!oldPw) { setPwError('请输入原密码'); return }
-    if (!newPw || newPw.length < 6) { setPwError('新密码不能少于 6 位'); return }
-    if (newPw !== confirmPw) { setPwError('两次密码不一致'); return }
+    if (!oldPw) { setPwError('Current password is required'); return }
+    if (!newPw || newPw.length < 6) { setPwError('New password must be at least 6 characters'); return }
+    if (newPw !== confirmPw) { setPwError('Passwords do not match'); return }
     setPwSaving(true)
     setPwError('')
     try {
@@ -99,7 +99,7 @@ export default function ProfilePage() {
       setPwSaved(true)
       setTimeout(() => setPwSaved(false), 2000)
     } catch (e) {
-      setPwError(e instanceof Error ? e.message : '修改失败')
+      setPwError(e instanceof Error ? e.message : 'Failed to update')
     } finally {
       setPwSaving(false)
     }
@@ -116,8 +116,8 @@ export default function ProfilePage() {
   return (
     <div className="max-w-2xl space-y-8">
       <div>
-        <h1 className="text-lg font-semibold text-gray-800">Owner 信息</h1>
-        <p className="text-sm text-gray-500 mt-1">展示给访客的个人信息</p>
+        <h1 className="text-lg font-semibold text-gray-800">Owner Profile</h1>
+        <p className="text-sm text-gray-500 mt-1">Personal information displayed to visitors</p>
       </div>
 
       {error && (
@@ -126,10 +126,10 @@ export default function ProfilePage() {
 
       {/* 基本信息表单 */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
-        <h2 className="text-sm font-medium text-gray-700">基本信息</h2>
+        <h2 className="text-sm font-medium text-gray-700">Basic Info</h2>
 
         <div>
-          <label className="text-sm text-gray-600 mb-1 block">姓名 / 展示名</label>
+          <label className="text-sm text-gray-600 mb-1 block">Name / Display Name</label>
           <input
             value={profile?.name || ''}
             onChange={(e) => setProfile(p => p ? { ...p, name: e.target.value } : p)}
@@ -139,18 +139,18 @@ export default function ProfilePage() {
         </div>
 
         <div>
-          <label className="text-sm text-gray-600 mb-1 block">简介标语</label>
+          <label className="text-sm text-gray-600 mb-1 block">Tagline</label>
           <input
             value={profile?.tagline || ''}
             onChange={(e) => setProfile(p => p ? { ...p, tagline: e.target.value } : p)}
-            placeholder="如：全栈开发者 & 独立产品人"
+            placeholder="e.g. Full-stack Developer & Indie Maker"
             className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm
                        focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
           />
         </div>
 
         <div>
-          <label className="text-sm text-gray-600 mb-1 block">头像 URL</label>
+          <label className="text-sm text-gray-600 mb-1 block">Avatar URL</label>
           <input
             value={profile?.avatarUrl || ''}
             onChange={(e) => setProfile(p => p ? { ...p, avatarUrl: e.target.value } : p)}
@@ -168,21 +168,21 @@ export default function ProfilePage() {
                        text-white text-sm rounded-xl transition-colors disabled:opacity-60"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {saved ? '已保存 ✓' : '保存'}
+            {saved ? 'Saved ✓' : 'Save'}
           </button>
         </div>
       </div>
 
       {/* 修改用户名 */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
-        <h2 className="text-sm font-medium text-gray-700">修改用户名</h2>
-        <p className="text-xs text-gray-400">修改后需使用新用户名重新登录</p>
+        <h2 className="text-sm font-medium text-gray-700">Change Username</h2>
+        <p className="text-xs text-gray-400">You will need to log in again with the new username after changing it.</p>
 
         <div>
           <input
             value={newUsername}
             onChange={e => { setNewUsername(e.target.value); setUsernameError('') }}
-            placeholder="新用户名（英文或数字）"
+            placeholder="New username (letters and numbers only)"
             className={[
               'w-full border rounded-xl px-3 py-2 text-sm',
               'focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400',
@@ -200,21 +200,21 @@ export default function ProfilePage() {
                        text-white text-sm rounded-xl transition-colors disabled:opacity-60"
           >
             {usernameSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-            {usernameSaved ? '已修改 ✓' : '确认修改'}
+            {usernameSaved ? 'Updated ✓' : 'Confirm'}
           </button>
         </div>
       </div>
 
       {/* 修改密码 */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
-        <h2 className="text-sm font-medium text-gray-700">修改密码</h2>
+        <h2 className="text-sm font-medium text-gray-700">Change Password</h2>
 
         <div className="relative">
           <input
             type={showOldPw ? 'text' : 'password'}
             value={oldPw}
             onChange={e => { setOldPw(e.target.value); setPwError('') }}
-            placeholder="原密码"
+            placeholder="Current password"
             className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm pr-10
                        focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
           />
@@ -232,7 +232,7 @@ export default function ProfilePage() {
             type={showNewPw ? 'text' : 'password'}
             value={newPw}
             onChange={e => { setNewPw(e.target.value); setPwError('') }}
-            placeholder="新密码（不少于 6 位）"
+            placeholder="New password (at least 6 characters)"
             className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm pr-10
                        focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
           />
@@ -249,7 +249,7 @@ export default function ProfilePage() {
           type="password"
           value={confirmPw}
           onChange={e => { setConfirmPw(e.target.value); setPwError('') }}
-          placeholder="确认新密码"
+          placeholder="Confirm new password"
           className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm
                      focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
         />
@@ -264,15 +264,15 @@ export default function ProfilePage() {
                        text-white text-sm rounded-xl transition-colors disabled:opacity-60"
           >
             {pwSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-            {pwSaved ? '已修改 ✓' : '确认修改'}
+            {pwSaved ? 'Updated ✓' : 'Confirm'}
           </button>
         </div>
       </div>
 
       {/* 初始提示词管理 */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6">
-        <h2 className="text-sm font-medium text-gray-700 mb-4">初始提示词</h2>
-        <p className="text-xs text-gray-400 mb-4">展示在聊天首屏的引导问题，供访客快速开始对话</p>
+        <h2 className="text-sm font-medium text-gray-700 mb-4">Initial Suggestions</h2>
+        <p className="text-xs text-gray-400 mb-4">Prompt cards shown on the chat home screen to help visitors start a conversation</p>
         <SuggestionManager
           suggestions={suggestions}
           onRefresh={async () => {

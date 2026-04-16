@@ -16,7 +16,7 @@ export default function DocumentsPage() {
       const data = await fetchDocuments()
       setDocuments(data)
     } catch (e) {
-      setError(e instanceof Error ? e.message : '加载失败')
+      setError(e instanceof Error ? e.message : 'Failed to load')
     } finally {
       setLoading(false)
     }
@@ -27,9 +27,9 @@ export default function DocumentsPage() {
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <h1 className="text-lg font-semibold text-gray-800">文档管理</h1>
+        <h1 className="text-lg font-semibold text-gray-800">Documents</h1>
         <p className="text-sm text-gray-500 mt-1">
-          上传 PDF / TXT / DOCX 文件，系统自动解析并添加到知识库
+          Upload PDF / TXT / DOCX files and the system will automatically parse and add them to the knowledge base.
         </p>
       </div>
 

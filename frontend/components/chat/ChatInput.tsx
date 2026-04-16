@@ -26,7 +26,7 @@ export default function ChatInput({
   onSend,
   disabled = false,
   isLoading = false,
-  placeholder = '发送消息...',
+  placeholder = 'Send a message...',
 }: ChatInputProps) {
   const [value, setValue] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -87,7 +87,7 @@ export default function ChatInput({
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             disabled={disabled || isLoading}
-            placeholder={isLoading ? 'AI 正在回复...' : placeholder}
+            placeholder={isLoading ? 'AI is typing...' : placeholder}
             rows={1}
             className={[
               'flex-1 resize-none bg-transparent text-sm text-gray-800',
@@ -104,7 +104,7 @@ export default function ChatInput({
           <button
             onClick={handleSend}
             disabled={!canSend}
-            aria-label="发送消息"
+            aria-label="Send message"
             className={[
               'flex-shrink-0 w-8 h-8 flex items-center justify-center',
               'rounded-full transition-colors duration-150 mb-0.5',
@@ -123,7 +123,7 @@ export default function ChatInput({
 
         {/* 操作提示 */}
         <p className="text-xs text-gray-400 mt-1.5 text-center select-none">
-          Enter 发送 &nbsp;·&nbsp; Shift+Enter 换行
+          Enter to send &nbsp;·&nbsp; Shift+Enter for new line
         </p>
       </div>
     </div>

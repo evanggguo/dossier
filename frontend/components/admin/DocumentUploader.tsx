@@ -84,7 +84,7 @@ export default function DocumentUploader({ documents, onRefresh }: Props) {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".pdf,.txt,.docx,.ppt,.pptx"
+          accept=".pdf,.txt,.docx,.ppt,.pptx,.md"
           multiple
           className="hidden"
           onChange={(e) => handleUpload(e.target.files)}

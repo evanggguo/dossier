@@ -34,7 +34,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AdminDocumentService {
 
-    private static final Set<String> ALLOWED_TYPES = Set.of("pdf", "txt", "docx", "ppt", "pptx");
+    private static final Set<String> ALLOWED_TYPES = Set.of("pdf", "txt", "docx", "ppt", "pptx", "md");
 
     private final DocumentRepository documentRepository;
     private final OwnerRepository ownerRepository;

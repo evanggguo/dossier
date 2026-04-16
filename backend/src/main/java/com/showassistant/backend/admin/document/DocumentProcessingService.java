@@ -119,7 +119,7 @@ public class DocumentProcessingService {
         Path path = Paths.get(doc.getFilePath());
         return switch (doc.getFileType().toLowerCase()) {
             case "pdf" -> extractPdf(path);
-            case "txt" -> Files.readString(path, StandardCharsets.UTF_8);
+            case "txt", "md" -> Files.readString(path, StandardCharsets.UTF_8);
             case "docx" -> extractDocx(path);
             case "ppt", "pptx" -> extractPptx(path);
             default -> throw new BusinessException("UNSUPPORTED_TYPE",

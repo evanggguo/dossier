@@ -4,11 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-Dossier 是 AI 个人展示助理，让访客通过聊天了解拥有者的技能和履历。当前 MVP 为单用户模式，`owner_id=1` 硬编码在后端。
+Dossier 是 AI 个人展示助理，让访客通过聊天了解拥有者的技能和履历。支持多 Owner，通过 URL username 进行数据隔离。
 
-**两个子系统**（管理端尚未开发）：
-- **客户端（Client Portal）**：无需登录的 AI 聊天界面
-- **管理端（Admin Console）**：计划中，用于管理知识库和配置
+**三个子系统**：
+- **客户端（Client Portal）** `/{username}/chat`：无需登录，访客与 AI 助手对话了解 Owner 信息
+- **Owner 管理端（Admin Console）** `/admin`：Owner 登录后管理知识库、文档、个人信息、AI 自定义指令和初始提示词；JWT 鉴权
+- **超级管理面板（Super Admin Panel）** `/admin-panel`：创建/删除 Owner 账号；固定 Token（`X-Super-Admin-Token`）鉴权，不对外暴露
 
 ## 常用命令
 
@@ -135,7 +136,10 @@ com.dossier.backend
 
 ### 前端架构
 
-**路由**：`app/(client)/chat/page.tsx` → 客户端聊天页。`(client)` 是 Route Group，不影响 URL。
+**路由结构**：
+- `app/[ownerUsername]/chat/page.tsx` → 客户端聊天页（动态路由，按 username 隔离）
+- `app/admin/` → Owner 管理端（login / profile / knowledge / documents）；`admin/layout.tsx` 做 JWT 认证守卫
+- `app/admin-panel/page.tsx` → 超级管理面板（固定 Token 验证，Owner 账号增删）
 
 **核心 Hook**：`hooks/useChatStream.ts`
 - 使用 `fetch + ReadableStream` 而非 `EventSource`（原因：EventSource 只支持 GET，无法携带 JSON body）
@@ -143,7 +147,8 @@ com.dossier.backend
 - 游客模式：对话历史存 `localStorage`，每次请求携带完整 `history` 数组（后端不依赖 sessionId）
 
 **API 层**：
-- `lib/api.ts`：常规 REST 请求（owner profile、初始提示词）
+- `lib/api.ts`：客户端公开接口（owner profile、初始提示词）
+- `lib/admin-api.ts`：Owner 管理端接口（JWT Bearer Token 自动注入，401 跳转登录）
 - SSE 流式对话直接在 `useChatStream` 内处理，不经过 Next.js API Route（避免 SSE 被缓冲）
 
 **Nginx**：`/api/` 请求直接代理到后端（含 SSE 关键配置 `proxy_buffering off`），其余流量到 Next.js。

@@ -4,10 +4,11 @@
 
 ## 产品简介
 
-Dossier 是为自由职业者和小团队设计的 AI 名片系统，包含两个 Web 子系统：
+Dossier 是为自由职业者和小团队设计的 AI 名片系统，包含三个 Web 子系统：
 
-- **客户端（Client Portal）**：类 Gemini 风格的聊天界面，访客无需登录，直接与 AI 对话了解拥有者信息。
-- **管理端（Admin Console）**：拥有者维护知识库（支持文字/文件录入）、配置个人信息与初始提示词。
+- **客户端（Client Portal）** `/{username}/chat`：类 Gemini 风格的聊天界面，访客无需登录，直接与 AI 对话了解拥有者信息。
+- **Owner 管理端（Admin Console）** `/admin`：拥有者登录后维护知识库（文字/文件录入）、配置个人信息、自定义 AI 助手指令与初始提示词。
+- **超级管理面板（Super Admin Panel）** `/admin-panel`：系统级操作，负责创建和删除 Owner 账号（固定 Token 鉴权，不对外暴露）。
 
 ## 技术栈
 
@@ -89,13 +90,32 @@ dossier/
 
 ## 主要 API
 
+**客户端（公开，无需鉴权）**
+
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| `GET` | `/api/owner/profile` | 获取拥有者信息 |
-| `GET` | `/api/owner/suggestions` | 获取首屏提示词列表 |
-| `POST` | `/api/conversations` | 创建新会话 |
-| `POST` | `/api/conversations/{id}/messages/stream` | SSE 流式对话 |
-| `GET` | `/api/conversations/{id}/messages` | 获取历史消息 |
+| `GET` | `/api/owners/{username}/profile` | 获取 Owner 公开简介 |
+| `GET` | `/api/owners/{username}/suggestions` | 获取首屏初始提示词 |
+| `POST` | `/api/owners/{username}/chat/stream` | SSE 流式对话 |
+
+**Owner 管理端（JWT 鉴权）**
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| `POST` | `/api/admin/auth/login` | 登录获取 Token |
+| `GET/PUT` | `/api/admin/owner/profile` | 获取/更新个人信息及 AI 自定义指令 |
+| `PUT` | `/api/admin/owner/username` | 修改用户名 |
+| `PUT` | `/api/admin/owner/password` | 修改密码 |
+| `GET/POST/PUT/DELETE` | `/api/admin/knowledge` | 知识库条目 CRUD |
+| `GET/POST/DELETE` | `/api/admin/documents` | 文档上传、处理、删除 |
+| `GET/POST/PUT/DELETE` | `/api/admin/suggestions` | 初始提示词 CRUD |
+
+**超级管理面板（`X-Super-Admin-Token` 鉴权）**
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| `GET/POST` | `/api/super-admin/owners` | 查看/创建 Owner 账号 |
+| `DELETE` | `/api/super-admin/owners/{id}` | 删除 Owner 账号 |
 
 ## AI 提供商配置说明
 

@@ -28,51 +28,65 @@
 
 ```
 dossier/
-├── frontend/          # Next.js，客户端 + 管理端两套页面
+├── frontend/          # Next.js，三端页面
 │   ├── app/
-│   │   ├── (client)/  # 客户端路由组
-│   │   └── admin/     # 管理端路由组
-│   └── components/
-│       ├── chat/      # 对话相关组件（核心）
-│       └── admin/     # 管理端组件
+│   │   ├── [ownerUsername]/chat/  # 客户端（动态路由，多 Owner）
+│   │   ├── admin/                 # Owner 管理端（login/profile/knowledge/documents）
+│   │   └── admin-panel/           # 超级管理面板（Owner 账号增删）
+│   ├── components/
+│   │   ├── admin/     # 管理端组件（SuggestionManager、KnowledgeTable、DocumentUploader 等）
+│   │   └── ...        # 公共组件（OwnerProfile、ErrorAlert 等）
+│   ├── hooks/
+│   │   ├── useChatStream.ts   # SSE 流式对话
+│   │   └── useAdminAuth.ts    # 管理端 JWT 认证状态
+│   └── lib/
+│       ├── api.ts             # 客户端公开接口
+│       └── admin-api.ts       # 管理端接口（JWT 自动注入）
 │
 └── backend/           # Spring Boot
     ├── chat/          # 对话模块（流式 + RAG + 动态提示词）
+    ├── client/        # 客户端公开接口（/api/owners/{username}/...）
     ├── knowledge/     # 知识库模块（录入、检索）
     ├── conversation/  # 会话持久化模块
-    ├── owner/         # 拥有者信息模块（含 OwnerContextHolder）
-    ├── superadmin/    # 超级管理模块（owner 账号 CRUD，写死密码校验）
+    ├── owner/         # Owner 信息模块（含 OwnerContextHolder）
+    ├── document/      # 文档上传与处理模块
+    ├── admin/         # Owner 管理端接口（auth/owner/knowledge/document/suggestion）
+    ├── superadmin/    # 超级管理模块（Owner 账号 CRUD，固定 Token 鉴权）
     └── ai/            # AI 服务抽象层
         ├── provider/  # 多模型提供商实现
         │   ├── AiChatProvider        # 接口（流式对话抽象）
-        │   ├── OllamaChatProvider    # 本地 Ollama（默认，真实实现）
-        │   ├── ClaudeChatProvider    # Anthropic Claude（Mock，待接入）
-        │   └── OpenAiChatProvider    # OpenAI GPT（Mock，待接入）
-        ├── ChatService
-        ├── EmbeddingService
-        └── ExtractionService
+        │   ├── GoogleChatProvider    # Google Gemini（默认，真实实现）
+        │   ├── ClaudeChatProvider    # Anthropic Claude（真实实现）
+        │   ├── OllamaChatProvider    # 本地 Ollama（可选，真实实现）
+        │   └── MockChatProvider      # Mock fallback（开发/测试用）
+        └── EmbeddingService
 ```
 
 ### 3.2 部署结构
 
 ```
-                    Browser
-                       │
-          ┌────────────┴────────────┐
-          ▼                         ▼
-   Next.js (3000)            Next.js (3000)
-   /  (Client Portal)        /admin (Admin Console)
-          │                         │
-          └────────────┬────────────┘
-                       ▼
-             Spring Boot (8080)
-             ┌─────────────────┐
-             │   REST + SSE    │
-             └────────┬────────┘
-                      ▼
-             PostgreSQL (5432)
-             ├── 关系表（conversations, messages, …）
-             └── pgvector 扩展（knowledge_entries.embedding）
+                              Browser
+                                 │
+          ┌──────────────────────┼──────────────────────┐
+          ▼                      ▼                      ▼
+   Next.js (3000)          Next.js (3000)         Next.js (3000)
+   /{username}/chat         /admin                 /admin-panel
+   (Client Portal)         (Owner Admin Console)  (Super Admin Panel)
+          │                      │                      │
+          └──────────────────────┼──────────────────────┘
+                                 ▼
+                       Nginx (反向代理, :80)
+                       ├── /api/* → Spring Boot
+                       └── /*    → Next.js
+                                 ▼
+                       Spring Boot (8080)
+                       ┌─────────────────┐
+                       │   REST + SSE    │
+                       └────────┬────────┘
+                                ▼
+                       PostgreSQL (5432)
+                       ├── 关系表（owners, conversations, messages, …）
+                       └── pgvector 扩展（knowledge_entries.embedding）
 ```
 
 ---
@@ -459,9 +473,10 @@ public interface AiChatProvider {
 
 | 实现类 | 状态 | 说明 |
 |--------|------|------|
-| `OllamaChatProvider` | ✅ 真实实现 | 调用本地 Ollama HTTP API，默认模型 `qwen2.5:7b`，忽略 `ai.mock` |
+| `GoogleChatProvider` | ✅ 真实实现（默认） | 调用 Google AI Studio Gemini API，默认模型 `gemini-2.0-flash`，需要 `GOOGLE_AI_API_KEY` |
 | `ClaudeChatProvider` | ✅ 真实实现 | 调用 Anthropic Claude API，需要 `ANTHROPIC_API_KEY` |
-| `MockChatProvider` | 🔲 Mock fallback | 仅在 `ai.provider=claude` 且 `ai.mock=true` 时激活，返回模拟数据 |
+| `OllamaChatProvider` | ✅ 真实实现（可选） | 调用本地 Ollama HTTP API，忽略 `ai.mock`；docker-compose 中默认注释，需手动启用 |
+| `MockChatProvider` | ✅ Mock fallback | 云端提供商（google/claude）且 `ai.mock=true` 时激活，返回模拟数据，无需 API Key |
 
 #### 4.5.4 配置驱动选择
 
@@ -469,42 +484,51 @@ public interface AiChatProvider {
 
 | `ai.provider` | `ai.mock` | 激活的 Bean |
 |---------------|-----------|-------------|
-| `ollama`（默认） | 任意值（忽略） | `OllamaChatProvider` |
+| `google`（默认） | `false`（默认） | `GoogleChatProvider` |
+| `google` | `true` | `MockChatProvider` |
 | `claude` | `false` | `ClaudeChatProvider` |
-| `claude` | `true`（默认） | `MockChatProvider` |
+| `claude` | `true` | `MockChatProvider` |
+| `ollama` | 任意值（忽略） | `OllamaChatProvider` |
 
 ```yaml
 # application.yml
 ai:
-  provider: ${AI_PROVIDER:ollama}   # 可选: ollama（默认）| claude
-  mock: ${AI_MOCK:true}             # 仅对云端提供商生效，本地 Ollama 忽略此项
+  provider: ${AI_PROVIDER:google}   # 可选: google（默认）| claude | ollama
+  mock: ${AI_MOCK:false}            # 仅对云端提供商生效，ollama 忽略此项
 ```
 
 Spring 通过 `@ConditionalOnProperty` 在启动时装配唯一的 `AiChatProvider` Bean：
 
 ```java
-// 本地模型：始终真实调用，忽略 ai.mock
-@Bean
-@ConditionalOnProperty(name = "ai.provider", havingValue = "ollama", matchIfMissing = true)
-public AiChatProvider ollamaAiChatProvider(...) { ... }
-
-// 云端提供商配置（ai.provider=claude）
+// Google Gemini（默认）
 @Configuration
-@ConditionalOnProperty(name = "ai.provider", havingValue = "claude")
-static class CloudProviderConfig {
-    // ai.mock=false → 真实 Claude
-    @Bean
-    @ConditionalOnProperty(name = "ai.mock", havingValue = "false")
-    public AiChatProvider claudeAiChatProvider(...) { ... }
+@ConditionalOnProperty(name = "ai.provider", havingValue = "google", matchIfMissing = true)
+static class GoogleProviderConfig {
+    @Bean @ConditionalOnProperty(name = "ai.mock", havingValue = "false", matchIfMissing = true)
+    public AiChatProvider googleAiChatProvider(...) { ... }
 
-    // ai.mock=true（默认）→ Mock fallback
-    @Bean
-    @ConditionalOnProperty(name = "ai.mock", havingValue = "true", matchIfMissing = true)
+    @Bean @ConditionalOnProperty(name = "ai.mock", havingValue = "true")
     public AiChatProvider mockAiChatProvider() { ... }
 }
+
+// Claude 云端
+@Configuration
+@ConditionalOnProperty(name = "ai.provider", havingValue = "claude")
+static class ClaudeProviderConfig {
+    @Bean @ConditionalOnProperty(name = "ai.mock", havingValue = "false")
+    public AiChatProvider claudeAiChatProvider(...) { ... }
+
+    @Bean @ConditionalOnProperty(name = "ai.mock", havingValue = "true", matchIfMissing = true)
+    public AiChatProvider mockAiChatProvider() { ... }
+}
+
+// 本地 Ollama：始终真实调用，忽略 ai.mock
+@Bean
+@ConditionalOnProperty(name = "ai.provider", havingValue = "ollama")
+public AiChatProvider ollamaAiChatProvider(...) { ... }
 ```
 
-#### 4.5.5 Ollama 本地模型说明
+#### 4.5.5 Ollama 本地模型说明（可选）
 
 - **运行方式**：独立进程，暴露 HTTP API（`http://localhost:11434`）
 - **Spring AI 集成**：`spring-ai-starter-model-ollama` 提供 `OllamaChatModel` Bean
@@ -512,30 +536,22 @@ static class CloudProviderConfig {
   - 中英双语对话：`qwen2.5:7b`（阿里通义，7B 参数，消费级 GPU / 16GB 内存 CPU 可运行）
   - 仅英文或低内存：`llama3.2:3b`
 - **Tool Use 支持**：Ollama 0.3+ 支持 OpenAI 兼容的 function calling，Spring AI 的 `@Tool` 注解可直接使用
+- **注意**：Ollama 不是默认提供商，默认使用 Google Gemini；仅在需要本地推理或数据不出境时启用
 
 #### 4.5.6 Docker Compose 本地模型支持
 
-在 `docker-compose.yml` 中按需启用 Ollama 服务（可选，也可使用宿主机 Ollama）：
+`docker-compose.yml` 中 Ollama 服务**默认注释**，仅在明确使用 `AI_PROVIDER=ollama` 时取消注释：
 
 ```yaml
-ollama:
-  image: ollama/ollama:latest
-  container_name: dossier-ollama
-  ports:
-    - "11434:11434"
-  volumes:
-    - ollama_data:/root/.ollama
-  # GPU 加速（可选，需要 NVIDIA Container Toolkit）
-  # deploy:
-  #   resources:
-  #     reservations:
-  #       devices:
-  #         - driver: nvidia
-  #           count: all
-  #           capabilities: [gpu]
+# ─── Ollama 本地模型（可选，仅在 AI_PROVIDER=ollama 时需要）────
+# ollama:
+#   image: ollama/ollama:latest
+#   container_name: dossier-ollama
+#   volumes:
+#     - ollama_data:/root/.ollama
 ```
 
-后端环境变量配置：
+启用后，后端环境变量配置：
 
 ```yaml
 AI_PROVIDER: ollama

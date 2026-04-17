@@ -29,7 +29,7 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       AI_MOCK: ${AI_MOCK:-true}
-      AI_PROVIDER: ${AI_PROVIDER:-ollama}
+      AI_PROVIDER: ${AI_PROVIDER:-google}
       AI_OLLAMA_BASE_URL: ${AI_OLLAMA_BASE_URL:-http://ollama:11434}
       AI_OLLAMA_MODEL: ${AI_OLLAMA_MODEL:-qwen2.5:1.5b}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-placeholder}
@@ -83,15 +83,14 @@ services:
       - frontend
       - backend
 
-  # ─── Ollama 本地模型 ────────────────────────────────────────────
-  ollama:
-    image: ollama/ollama:latest
-    container_name: dossier-ollama
-    restart: unless-stopped
-    volumes:
-      - ollama_data:/root/.ollama
+  # ─── Ollama 本地模型（可选，仅在 AI_PROVIDER=ollama 时需要）────
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: dossier-ollama
+  #   restart: unless-stopped
+  #   volumes:
+  #     - ollama_data:/root/.ollama
 
 volumes:
   postgres_data:
-  ollama_data:
   uploads_data:

@@ -54,9 +54,14 @@ npm run lint
 # 默认 Mock 模式启动（无需任何 API Key）
 docker compose up -d
 
-# 切换 AI 提供商
-AI_PROVIDER=ollama docker compose up -d
+# 使用 Google Gemini（默认提供商，推荐）
+AI_MOCK=false GOOGLE_AI_API_KEY=<key> docker compose up -d
+
+# 使用 Claude API
 AI_PROVIDER=claude AI_MOCK=false ANTHROPIC_API_KEY=<key> docker compose up -d
+
+# 使用本地 Ollama（需先取消 docker-compose.yml 中 ollama 服务的注释）
+AI_PROVIDER=ollama docker compose up -d
 
 # 查看后端日志
 docker compose logs -f backend
@@ -107,9 +112,13 @@ com.dossier.backend
 
 | `ai.provider` | `ai.mock` | 生效提供商 |
 |---|---|---|
-| `ollama`（默认） | 任意 | OllamaChatProvider（始终真实调用） |
-| `claude` | `true`（默认） | MockChatProvider |
+| `google`（默认） | `true` | MockChatProvider |
+| `google` | `false` | GoogleChatProvider（需 GOOGLE_AI_API_KEY） |
+| `claude` | `true` | MockChatProvider |
 | `claude` | `false` | ClaudeChatProvider（需 ANTHROPIC_API_KEY） |
+| `ollama` | 任意 | OllamaChatProvider（始终真实调用，无需 Docker 中的 Ollama 服务） |
+
+**部署注意**：默认提供商为 `google`，**无需**安装或启动 Ollama。`docker-compose.yml` 中 Ollama 服务已注释，仅在明确使用 `AI_PROVIDER=ollama` 时才需要启用。
 
 ### 核心流式聊天流程
 
